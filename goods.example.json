@@ -1,12 +1,12 @@
 [
     {
-        "title": "Simple VPN",
+        "title": "Best ever VPN",
         "price": {
             "en": 1,
             "ru": 100,
             "stars": 50
         },
-        "callback": "simple_vpn",
+        "callback": "one_month",
         "months": 1
     }
 ]
