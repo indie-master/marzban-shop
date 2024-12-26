@@ -15,7 +15,7 @@ async def create_vpn_profile(tg_id: int):
         if result != None:
             return
         hash = hashlib.md5(str(tg_id).encode()).hexdigest()
-        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=hash)
+        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=f"suffix_{tg_id}_preffix")
         await conn.execute(sql_query)
         await conn.commit()
 
