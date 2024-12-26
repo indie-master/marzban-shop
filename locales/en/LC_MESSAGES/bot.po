@@ -46,7 +46,7 @@ msgstr ""
 msgid ""
 "Your profile is not active at the moment.\n️"
 "\n"
-"You can choose \"5 days free 🆓\" or \"Join 🏄🏻‍♂️\"."
+"You can choose \"3 days free 🆓\" or \"Join 🏄🏻‍♂️\"."
 msgstr ""
 
 #: bot/handlers/messages.py:41
@@ -99,7 +99,7 @@ msgid "Follow the <a href=\"{link}\">link</a> 🔗"
 msgstr ""
 
 #: bot/keyboards/main_menu.py:23
-msgid "5 days free 🆓"
+msgid "3 days free 🆓"
 msgstr ""
 
 #: bot/keyboards/pay.py:9
