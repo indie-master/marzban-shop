@@ -35,7 +35,10 @@ cd marzban-shop
 docker compose build
 ```
 
-After that edit goods.examples.json
+After that edit goods.example.json
+```bash
+nano goods.example.json
+```
 
 ##### Good example
 
@@ -53,6 +56,9 @@ After that edit goods.examples.json
 ```
 
 And edit .env.example file (see [configuration](#configuration))
+```bash
+nano .env.example
+```
 
 After all run this code
 
