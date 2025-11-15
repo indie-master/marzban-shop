@@ -30,7 +30,7 @@ This project is a fork. [Original project](https://github.com/gunsh1p/marzban-sh
 #### Setup
 
 ```bash
-git clone https://github.com/maxmenkov/marzban-shop.git
+git clone https://github.com/indie-master/marzban-shop.git
 cd marzban-shop
 docker compose build
 ```
