@@ -25,13 +25,14 @@ Telegram bot shop for selling and renewing VPN subscriptions via Marzban. The bo
    chmod +x install.sh
    sudo ./install.sh
    ```
-2. Follow the prompts to fill in key `.env` values and configure nginx.
-3. After installation, you can manage the bot with `mshop` and nginx with `mnginx`.
+2. The installer can configure nginx/Let’s Encrypt if you supply a domain, or you can skip nginx and set it up later manually using `nginx/*.example` and `mnginx`.
+3. Follow the prompts to fill in key `.env` values (copied from `.env.example`) and optional goods.
+4. After installation, you can manage the bot with `mshop` and nginx with `mnginx`.
 
 ## Configuration
 
 ### Environment file (`.env`)
-A template `.env` with placeholders is included in the repo. Key settings:
+The repository ships `.env.example` with placeholders; copy it to `.env` during installation (the installer will offer to do this). Real `.env` values are not tracked in git. Key settings:
 - `BOT_TOKEN` – Telegram bot token
 - `SHOP_NAME` – Shop display name
 - `TEST_PERIOD` – Enable/disable trial button (`true`/`false`)
@@ -46,10 +47,10 @@ A template `.env` with placeholders is included in the repo. Key settings:
 - Webhook: `WEBHOOK_URL`, `WEBHOOK_PORT`
 - Notifications: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
 
-Edit the file manually or with `mshop edit .env` after installation.
+Edit the file manually or with `mshop edit .env` after installation. Keep your real `.env` out of git.
 
 ### Goods configuration (`goods.json`)
-`goods.json` holds your tariffs. A minimal example is provided:
+`goods.example.json` holds a sample tariff set; copy it to `goods.json` during installation or later. The real `goods.json` is not tracked in git. A minimal example:
 ```json
 [
   {

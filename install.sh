@@ -5,6 +5,7 @@ INSTALL_DIR="/opt/marzban-shop"
 REPO_URL="https://github.com/USER/marzban-shop.git" # replace USER with your fork
 DOMAIN_BOT="bot.example.com"
 EMAIL_LETSENCRYPT="admin@example.com"
+SKIP_NGINX_SETUP=false
 
 require_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -49,15 +50,36 @@ clone_or_update_repo() {
     fi
 }
 
+copy_if_missing() {
+    local src=$1
+    local dst=$2
+    local prompt=$3
+
+    if [[ -f "$dst" ]]; then
+        echo "$dst already exists; leaving it untouched."
+        return
+    fi
+
+    if [[ -f "$src" ]]; then
+        read -r -p "$prompt [Y/n]: " ans
+        if [[ "$ans" =~ ^[Nn]$ ]]; then
+            echo "Skipping creation of $dst. Please create it manually."
+            return
+        fi
+        cp "$src" "$dst"
+        echo "Created $dst from $(basename "$src")"
+    else
+        echo "$src not found. Creating minimal $dst; please fill it manually."
+        touch "$dst"
+    fi
+}
+
 ensure_files() {
     cd "$INSTALL_DIR"
-    if [[ ! -f .env ]]; then
-        echo "Creating empty .env (fill it with your values)"
-        touch .env
-    fi
-    if [[ ! -f goods.json ]]; then
-        echo "Creating goods.json from template"
-        cat <<'JSON' > goods.json
+    copy_if_missing "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env" ".env not found. Create it from .env.example?"
+
+    if [[ ! -f "$INSTALL_DIR/goods.example.json" ]]; then
+        cat <<'JSON' > "$INSTALL_DIR/goods.example.json"
 [
   {
     "title": "Basic VPN",
@@ -69,6 +91,7 @@ ensure_files() {
 ]
 JSON
     fi
+    copy_if_missing "$INSTALL_DIR/goods.example.json" "$INSTALL_DIR/goods.json" "goods.json not found. Create it from goods.example.json?"
 }
 
 update_env_value() {
@@ -116,29 +139,27 @@ interactive_env_setup() {
     [[ -n "$tg_info" ]] && update_env_value "TG_INFO_CHANEL" "$tg_info" "$env_file"
 }
 
-prepare_goods() {
-    if [[ ! -f "$INSTALL_DIR/goods.json" ]]; then
-        echo "goods.json not found; creating template"
-        cat <<'JSON' > "$INSTALL_DIR/goods.json"
-[
-  {
-    "title": "Basic VPN",
-    "price": {"en": 1, "ru": 100, "stars": 50},
-    "callback": "basic_vpn",
-    "months": 1,
-    "description": "Example tariff; replace with your real plans"
-  }
-]
-JSON
+prompt_nginx_mode() {
+    echo "Do you want to configure nginx and obtain a Let's Encrypt certificate now?"
+    echo "1) Yes, configure nginx and request certificate"
+    echo "2) No, skip nginx setup (I'll configure nginx manually later)"
+    read -r -p "[1/2]: " choice
+    if [[ "$choice" != "1" ]]; then
+        SKIP_NGINX_SETUP=true
+        return
     fi
-    read -r -p "Keep example goods.json? [Y/n]: " keep_goods
-    if [[ "$keep_goods" =~ ^[Nn]$ ]]; then
-        echo "Please edit $INSTALL_DIR/goods.json manually later."
+
+    read -r -p "Enter bot domain (e.g. bot.example.com). Leave empty to skip nginx setup: " domain
+    if [[ -z "$domain" ]]; then
+        SKIP_NGINX_SETUP=true
+        echo "No domain provided. Skipping nginx configuration."
+    else
+        DOMAIN_BOT="$domain"
     fi
 }
 
 configure_nginx() {
-    echo "Configuring nginx..."
+    echo "Configuring nginx for $DOMAIN_BOT ..."
     mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /var/www/letsencrypt
     if [[ -f "$INSTALL_DIR/nginx/bot.conf.example" ]]; then
         sed "s/bot.example.com/$DOMAIN_BOT/g" "$INSTALL_DIR/nginx/bot.conf.example" > /etc/nginx/sites-available/bot.conf
@@ -146,12 +167,21 @@ configure_nginx() {
     if [[ ! -L /etc/nginx/sites-enabled/bot.conf ]]; then
         ln -s /etc/nginx/sites-available/bot.conf /etc/nginx/sites-enabled/bot.conf
     fi
-    nginx -t && systemctl reload nginx
+    if nginx -t; then
+        systemctl reload nginx
+    else
+        echo "nginx configuration test failed. You may need certificates before it succeeds."
+    fi
 }
 
 obtain_certificate() {
-    echo "Requesting Let's Encrypt certificate (may require DNS pointing)..."
+    echo "Requesting Let's Encrypt certificate (domain must point to this server)..."
     certbot --nginx -d "$DOMAIN_BOT" --email "$EMAIL_LETSENCRYPT" --agree-tos --redirect || true
+    if nginx -t; then
+        systemctl reload nginx
+    else
+        echo "nginx configuration still failing; please review /etc/nginx configs and certificates."
+    fi
 }
 
 run_compose() {
@@ -185,16 +215,25 @@ main() {
     ensure_dep python3-certbot-nginx
     install_docker
     install_compose
+
     clone_or_update_repo
     ensure_files
     interactive_env_setup
-    prepare_goods
-    configure_nginx
-    obtain_certificate
+    prompt_nginx_mode
+
+    if [[ "$SKIP_NGINX_SETUP" == false ]]; then
+        configure_nginx
+        obtain_certificate
+    else
+        echo "Skipping nginx setup. Configure it manually later using nginx/*.example or mnginx."
+    fi
+
     run_compose
     install_cli /usr/local/bin/mshop "$INSTALL_DIR/scripts/mshop"
     install_cli /usr/local/bin/mnginx "$INSTALL_DIR/scripts/mnginx"
+
     echo "Installation finished. Update .env and goods.json if needed, then run docker compose up -d."
 }
 
 main "$@"
+

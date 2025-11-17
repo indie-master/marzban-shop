@@ -141,4 +141,8 @@ cython_debug/
 data/db
 data/pgadmin
 
+# Local configuration (examples are tracked separately)
+.env
+goods.json
+
 test_req_webhook.py
