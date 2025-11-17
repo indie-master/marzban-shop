@@ -89,6 +89,10 @@ msgstr ""
 msgid "⏪ Back"
 msgstr "⏪ Назад"
 
+#: bot/keyboards/back.py:9 bot/keyboards/buy_menu.py:18 bot/keyboards/payments.py:43 bot/keyboards/subscription.py:17
+msgid "⬅️ Назад"
+msgstr "⬅️ Назад"
+
 #: bot/keyboards/buy_menu.py:11
 msgid "{title} - {price_ru}₽"
 msgstr "{title} - {price_ru}₽"
@@ -166,6 +170,92 @@ msgstr "К оплате - {amount}⭐️ ⬇️"
 #: bot/handlers/callbacks.py:50
 msgid "Subscription for {amount} month"
 msgstr "Подписка {amount} мес."
+
+#: bot/keyboards/payments.py:37
+msgid "Card transfer"
+msgstr "Перевод на карту"
+
+#: bot/keyboards/manual_payment.py:11
+msgid "Sber"
+msgstr "Сбер"
+
+#: bot/keyboards/manual_payment.py:17
+msgid "T-Bank"
+msgstr "Т-Банк"
+
+#: bot/keyboards/manual_payment.py:23
+msgid "I have paid"
+msgstr "Я оплатил"
+
+msgid "You are not allowed to perform this action."
+msgstr "Вам нельзя выполнять это действие."
+
+msgid "{days} days free 🆓"
+msgstr "{days} дней бесплатно 🆓"
+
+#: bot/handlers/callbacks.py:76
+msgid "To pay, use one of the links below. After payment, press «I have paid»."
+msgstr "Для оплаты воспользуйтесь одной из ссылок ниже. После оплаты нажмите «Я оплатил»."
+
+#: bot/handlers/callbacks.py:86
+msgid "We will check your payment soon. Thank you!"
+msgstr "Скоро проверим ваш платеж. Спасибо!"
+
+#: bot/keyboards/manual_payment.py:36
+msgid "Confirm ✅"
+msgstr "Подтвердить ✅"
+
+#: bot/keyboards/manual_payment.py:40
+msgid "Reject ❌"
+msgstr "Отклонить ❌"
+
+#: bot/handlers/callbacks.py:91
+msgid "This payment has already been processed. Please start a new payment if necessary."
+msgstr "Этот платёж уже обработан. При необходимости начните оплату заново."
+
+#: bot/handlers/callbacks.py:94
+msgid "Please send a screenshot or receipt of your payment in reply to this message."
+msgstr "Пожалуйста, отправьте скриншот или чек об оплате в ответ на это сообщение."
+
+#: bot/handlers/callbacks.py:116
+msgid "Manual payment #{payment_id}\nUser: <a href=\"tg://user?id={user_id}\">{username}</a> (@{username_tag})\nPlan: {plan}\nAmount: {amount}"
+msgstr "Ручной платёж #{payment_id}\nПользователь: <a href=\"tg://user?id={user_id}\">{username}</a> (@{username_tag})\nТариф: {plan}\nСумма: {amount}"
+
+#: bot/handlers/callbacks.py:136
+msgid "Payment not found."
+msgstr "Платёж не найден."
+
+#: bot/handlers/callbacks.py:144
+msgid "Failed to activate subscription."
+msgstr "Не удалось активировать подписку."
+
+#: bot/handlers/callbacks.py:148
+msgid "⚠️ Failed to activate subscription for payment {payment_id}. Error: {error}"
+msgstr "⚠️ Не удалось активировать подписку по платежу {payment_id}. Ошибка: {error}"
+
+#: bot/handlers/callbacks.py:157
+msgid "Payment confirmed ✅\nYour subscription is active until {date}."
+msgstr "Оплата подтверждена ✅\nВаша подписка активна до {date}."
+
+#: bot/handlers/callbacks.py:161
+msgid "✅ Payment {payment_id} confirmed, subscription active until {date}."
+msgstr "✅ Платёж {payment_id} подтверждён, подписка активна до {date}."
+
+#: bot/handlers/callbacks.py:166
+msgid "Payment confirmed."
+msgstr "Платёж подтверждён."
+
+#: bot/handlers/callbacks.py:174
+msgid "❌ Payment {payment_id} was rejected by administrator."
+msgstr "❌ Платёж {payment_id} отклонён администратором."
+
+#: bot/handlers/callbacks.py:179
+msgid "Payment not confirmed ❌\nPlease pay via the link in the bot and send a correct confirmation (screenshot or receipt)."
+msgstr "Платёж не подтверждён ❌\nПожалуйста, оплатите по ссылке в боте и отправьте корректное подтверждение (скриншот или чек)."
+
+#: bot/handlers/callbacks.py:190
+msgid "Payment rejected."
+msgstr "Платёж отклонён."
 
 #: bot/keyboards/xtr_pay.py:6
 msgid "Pay"

@@ -1,0 +1,30 @@
+{
+  "vmess": {
+    "proxies": {},
+    "inbounds": [
+      "VMess TCP"
+    ]
+  },
+  "vless": {
+    "proxies": {
+      "flow": "xtls-rprx-vision"
+    },
+    "inbounds": [
+      "VLESS + TCP + REALITY"
+    ]
+  },
+  "trojan": {
+    "proxies": {},
+    "inbounds": [
+      "Trojan Websocket TLS"
+    ]
+  },
+  "shadowsocks": {
+    "proxies": {
+      "method": "chacha20-ietf-poly1305"
+    },
+    "inbounds": [
+      "Shadowsocks TCP"
+    ]
+  }
+}
