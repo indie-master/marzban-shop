@@ -110,6 +110,30 @@ msgstr ""
 msgid "YooKassa (₽)"
 msgstr ""
 
+#: bot/keyboards/payments.py:37
+msgid "Card transfer"
+msgstr ""
+
+#: bot/keyboards/manual_payment.py:11
+msgid "Pay via Sber"
+msgstr ""
+
+#: bot/keyboards/manual_payment.py:17
+msgid "Pay via T-Bank"
+msgstr ""
+
+#: bot/keyboards/manual_payment.py:23
+msgid "I have paid"
+msgstr ""
+
+#: bot/handlers/callbacks.py:76
+msgid "To pay, use one of the links below. After payment, press «I have paid»."
+msgstr ""
+
+#: bot/handlers/callbacks.py:86
+msgid "We will check your payment soon. Thank you!"
+msgstr ""
+
 #: bot/tasks/notify_expired.py:22
 msgid ""
 "Hello, {name} 👋🏻\n"
