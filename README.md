@@ -21,7 +21,7 @@ Telegram bot shop for selling and renewing VPN subscriptions via Marzban. The bo
 ## Quick install (one-click)
 1. Download and run the installer (update REPO_URL inside `install.sh` to your fork if needed):
    ```bash
-   curl -O https://raw.githubusercontent.com/USER/marzban-shop/main/install.sh
+   curl -O https://raw.githubusercontent.com/indie-master/marzban-shop/main/install.sh
    chmod +x install.sh
    sudo ./install.sh
    ```
