@@ -8,7 +8,7 @@ from aiogram.utils.i18n import lazy_gettext as __
 
 import logging
 
-from keyboards import get_payment_keyboard, get_pay_keyboard, get_xtr_pay_keyboard
+from keyboards import get_payment_keyboard, get_pay_keyboard, get_xtr_pay_keyboard, get_manual_payment_keyboard
 
 from utils import goods, yookassa, cryptomus
 
@@ -68,9 +68,9 @@ async def callback_payment_method_select(callback: CallbackQuery):
         await callback.answer()
         return
     result = await cryptomus.create_payment(
-        callback.from_user.id, 
-        data, 
-        callback.message.chat.id, 
+        callback.from_user.id,
+        data,
+        callback.message.chat.id,
         callback.from_user.language_code)
     now = datetime.now()
     expire_date = (now + timedelta(minutes=60)).strftime("%d/%m/%Y, %H:%M")
@@ -81,6 +81,27 @@ async def callback_payment_method_select(callback: CallbackQuery):
         ),
         reply_markup=get_pay_keyboard(result['url']))
     await callback.answer()
+
+
+@router.callback_query(F.data.startswith("pay_manual_"))
+async def callback_payment_manual(callback: CallbackQuery):
+    await callback.message.delete()
+    data = callback.data.replace("pay_manual_", "")
+    if data not in goods.get_callbacks():
+        await callback.answer()
+        return
+    await callback.message.answer(
+        _("To pay, use one of the links below. After payment, press «I have paid»."),
+        reply_markup=get_manual_payment_keyboard(data)
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("manual_paid:"))
+async def callback_manual_paid(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer(_("We will check your payment soon. Thank you!"))
+
 
 @router.callback_query(lambda c: c.data in goods.get_callbacks())
 async def callback_payment_method_select(callback: CallbackQuery):

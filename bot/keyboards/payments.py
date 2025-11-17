@@ -9,7 +9,8 @@ def get_payment_keyboard(good) -> InlineKeyboardMarkup:
     yoo = glv.config['YOOKASSA_SHOPID'] and glv.config['YOOKASSA_TOKEN']
     crypt = glv.config['MERCHANT_UUID'] and glv.config['CRYPTO_TOKEN']
     stars = glv.config['STARS_PAYMENT_ENABLED']
-    f = yoo or crypt
+    manual = glv.config.get('PAY_SBER_URL') or glv.config.get('PAY_TBANK_URL')
+    f = yoo or crypt or manual
     if not f:
         builder.row(
             InlineKeyboardButton(
@@ -38,6 +39,14 @@ def get_payment_keyboard(good) -> InlineKeyboardMarkup:
             InlineKeyboardButton(
                 text=f"Telegram Stars - ⭐️",
                 callback_data=f"pay_stars_{good['callback']}"
+            )
+        )
+
+    if manual:
+        builder.row(
+            InlineKeyboardButton(
+                text=_("Card transfer"),
+                callback_data=f"pay_manual_{good['callback']}"
             )
         )
     return builder.as_markup()
