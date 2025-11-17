@@ -112,27 +112,89 @@ msgstr ""
 
 #: bot/keyboards/payments.py:37
 msgid "Card transfer"
-msgstr ""
+msgstr "Card transfer"
 
 #: bot/keyboards/manual_payment.py:11
-msgid "Pay via Sber"
-msgstr ""
+msgid "Sber"
+msgstr "Sber"
 
 #: bot/keyboards/manual_payment.py:17
-msgid "Pay via T-Bank"
-msgstr ""
+msgid "T-Bank"
+msgstr "T-Bank"
 
 #: bot/keyboards/manual_payment.py:23
 msgid "I have paid"
-msgstr ""
+msgstr "I have paid"
+
+msgid "You are not allowed to perform this action."
+msgstr "You are not allowed to perform this action."
+
+msgid "{days} days free 🆓"
+msgstr "{days} days free 🆓"
 
 #: bot/handlers/callbacks.py:76
 msgid "To pay, use one of the links below. After payment, press «I have paid»."
-msgstr ""
+msgstr "To pay, use one of the links below. After payment, press «I have paid»."
 
 #: bot/handlers/callbacks.py:86
 msgid "We will check your payment soon. Thank you!"
-msgstr ""
+msgstr "We will check your payment soon. Thank you!"
+
+#: bot/keyboards/manual_payment.py:36
+msgid "Confirm ✅"
+msgstr "Confirm ✅"
+
+#: bot/keyboards/manual_payment.py:40
+msgid "Reject ❌"
+msgstr "Reject ❌"
+
+#: bot/handlers/callbacks.py:91
+msgid "This payment has already been processed. Please start a new payment if necessary."
+msgstr "This payment has already been processed. Please start a new payment if necessary."
+
+#: bot/handlers/callbacks.py:94
+msgid "Please send a screenshot or receipt of your payment in reply to this message."
+msgstr "Please send a screenshot or receipt of your payment in reply to this message."
+
+#: bot/handlers/callbacks.py:116
+msgid "Manual payment #{payment_id}\nUser: <a href=\"tg://user?id={user_id}\">{username}</a> (@{username_tag})\nPlan: {plan}\nAmount: {amount}"
+msgstr "Manual payment #{payment_id}\nUser: <a href=\"tg://user?id={user_id}\">{username}</a> (@{username_tag})\nPlan: {plan}\nAmount: {amount}"
+
+#: bot/handlers/callbacks.py:136
+msgid "Payment not found."
+msgstr "Payment not found."
+
+#: bot/handlers/callbacks.py:144
+msgid "Failed to activate subscription."
+msgstr "Failed to activate subscription."
+
+#: bot/handlers/callbacks.py:148
+msgid "⚠️ Failed to activate subscription for payment {payment_id}. Error: {error}"
+msgstr "⚠️ Failed to activate subscription for payment {payment_id}. Error: {error}"
+
+#: bot/handlers/callbacks.py:157
+msgid "Payment confirmed ✅\nYour subscription is active until {date}."
+msgstr "Payment confirmed ✅\nYour subscription is active until {date}."
+
+#: bot/handlers/callbacks.py:161
+msgid "✅ Payment {payment_id} confirmed, subscription active until {date}."
+msgstr "✅ Payment {payment_id} confirmed, subscription active until {date}."
+
+#: bot/handlers/callbacks.py:166
+msgid "Payment confirmed."
+msgstr "Payment confirmed."
+
+#: bot/handlers/callbacks.py:174
+msgid "❌ Payment {payment_id} was rejected by administrator."
+msgstr "❌ Payment {payment_id} was rejected by administrator."
+
+#: bot/handlers/callbacks.py:179
+msgid "Payment not confirmed ❌\nPlease pay via the link in the bot and send a correct confirmation (screenshot or receipt)."
+msgstr "Payment not confirmed ❌\nPlease pay via the link in the bot and send a correct confirmation (screenshot or receipt)."
+
+#: bot/handlers/callbacks.py:190
+msgid "Payment rejected."
+msgstr "Payment rejected."
 
 #: bot/tasks/notify_expired.py:22
 msgid ""

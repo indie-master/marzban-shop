@@ -10,7 +10,7 @@ def get_payment_keyboard(good) -> InlineKeyboardMarkup:
     crypt = glv.config['MERCHANT_UUID'] and glv.config['CRYPTO_TOKEN']
     stars = glv.config['STARS_PAYMENT_ENABLED']
     manual = glv.config.get('PAY_SBER_URL') or glv.config.get('PAY_TBANK_URL')
-    f = yoo or crypt or manual
+    f = yoo or crypt or manual or stars
     if not f:
         builder.row(
             InlineKeyboardButton(
