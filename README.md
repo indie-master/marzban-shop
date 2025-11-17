@@ -82,10 +82,11 @@ docker compose up -d
 | BOT_TOKEN | Telegram bot token obtained from BotFather |
 | SHOP_NAME | Name of the VPN shop |
 | TEST_PERIOD | Availability of test period (bool: true or false) |
-| PERIOD_LIMIT | Test period limit |
+| TEST_PERIOD_DAYS | Test period duration in days |
 | ABOUT | Service information |
 | RULES_LINK | Link to service rules |
 | SUPPORT_LINK | Link to service support |
+| PROTOCOLS_CONFIG | Path to protocols config JSON (e.g. protocols.json) |
 | YOOKASSA_TOKEN | YooKassa's token |
 | YOOKASSA_SHOPID | YooKassa's shopId |
 | EMAIL | Email for receipts |
@@ -104,7 +105,10 @@ docker compose up -d
 | RENEW_NOTIFICATION_TIME | Scheduled time for exececute notify renew subscription task in format HH:mm |
 | EXPIRED_NOTIFICATION_TIME | Scheduled time for exececute notify users about expired subscription task in format HH:mm |
 | TG_INFO_CHANEL | Telegram chanel link |
-| STARS_PAYMENT_ENABLED | Enable stars payment |
+| STARS_PAYMENT_ENABLED | Enable stars payment (true to enable) |
+| PAY_SBER_URL | Manual payment link for Sber |
+| PAY_TBANK_URL | Manual payment link for T-Bank |
+| ADMIN_IDS | Comma-separated list of Telegram admin IDs allowed to confirm manual payments |
 
 #### Difference between host and global
 
