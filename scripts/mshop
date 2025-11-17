@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+set -e
+
+INSTALL_DIR="/opt/marzban-shop" # change if installed elsewhere
+ENV_FILE="$INSTALL_DIR/.env"
+COMPOSE_FILE="$INSTALL_DIR/docker-compose.yml"
+BACKUP_DIR="$INSTALL_DIR/backups"
+DB_CONTAINER="db"
+BOT_CONTAINER="bot"
+
+usage() {
+    cat <<'USAGE'
+Usage: mshop <command>
+
+Commands:
+  status                   Show docker compose service status
+  start                    Start services (docker compose up -d)
+  stop                     Stop services (docker compose down)
+  restart                  Restart services
+  reload                   Restart bot container only
+  logs                     Tail bot container logs
+  edit .env                Edit .env
+  edit docker-compose.yml  Edit docker-compose.yml
+  edit goods.json          Edit goods.json
+  edit protocols.json      Edit protocols.json if present
+  edit db                  Open mysql shell inside DB container (dangerous)
+  update                   Pull repository and containers then restart
+  backup-db                Create DB backup and optional Telegram upload
+  restore-db <archive>     Restore DB from archive
+  webhook-info             Show current Telegram webhook info
+  webhook-set              Set Telegram webhook to ${WEBHOOK_URL}/webhook
+  webhook-delete           Delete Telegram webhook
+  webhook-reset            Delete and set Telegram webhook
+  help                     Show this message
+USAGE
+}
+
+ensure_env_loaded() {
+    if [[ -f "$ENV_FILE" ]]; then
+        set -a
+        # shellcheck disable=SC1090
+        . "$ENV_FILE"
+        set +a
+    fi
+}
+
+ensure_in_dir() {
+    cd "$INSTALL_DIR"
+}
+
+edit_file() {
+    local file=$1
+    if [[ ! -f "$file" ]]; then
+        read -r -p "$file does not exist. Create it? [Y/n]: " create
+        if [[ "$create" =~ ^[Nn]$ ]]; then
+            echo "Cancelled."
+            return
+        fi
+        touch "$file"
+    fi
+    local editor=${EDITOR:-nano}
+    "$editor" "$file"
+}
+
+confirm_db() {
+    echo "WARNING: Direct DB editing can break your installation."
+    read -r -p "Type 'y' to continue: " answer
+    [[ "$answer" == "y" ]]
+}
+
+cmd_status() { ensure_in_dir; docker compose ps; }
+cmd_start() { ensure_in_dir; docker compose up -d; }
+cmd_stop() { ensure_in_dir; docker compose down; }
+cmd_restart() { ensure_in_dir; docker compose down && docker compose up -d; }
+cmd_reload() { ensure_in_dir; docker compose restart "$BOT_CONTAINER"; }
+cmd_logs() { ensure_in_dir; docker compose logs -f "$BOT_CONTAINER"; }
+
+cmd_update() {
+    ensure_in_dir
+    git pull
+    docker compose pull || true
+    docker compose up -d
+}
+
+cmd_backup() {
+    ensure_in_dir
+    ensure_env_loaded
+    mkdir -p "$BACKUP_DIR"
+    local ts backup_sql backup_tar
+    ts=$(date +%Y%m%d_%H%M%S)
+    backup_sql="$BACKUP_DIR/db_${ts}.sql"
+    backup_tar="$BACKUP_DIR/db_${ts}.tar.gz"
+
+    docker compose exec "$DB_CONTAINER" sh -c 'mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"' > "$backup_sql"
+    tar -czf "$backup_tar" -C "$BACKUP_DIR" "$(basename "$backup_sql")"
+    rm "$backup_sql"
+
+    if [[ -n "${TG_BACKUP_BOT_TOKEN:-}" && -n "${TG_BACKUP_CHAT_ID:-}" ]]; then
+        curl -s -F "chat_id=${TG_BACKUP_CHAT_ID}" \
+             -F document=@"$backup_tar" \
+             "https://api.telegram.org/bot${TG_BACKUP_BOT_TOKEN}/sendDocument" >/dev/null || true
+    fi
+
+    echo "Backup stored at $backup_tar"
+}
+
+cmd_restore() {
+    ensure_in_dir
+    ensure_env_loaded
+    local archive=$1
+    if [[ -z "$archive" || ! -f "$archive" ]]; then
+        echo "Usage: mshop restore-db <backup.tar.gz>"
+        exit 1
+    fi
+
+    echo "WARNING: This will overwrite the current database."
+    read -r -p "Continue? [y/N]: " confirm
+    [[ "$confirm" == "y" ]] || exit 1
+
+    local tmpdir sql_file
+    tmpdir=$(mktemp -d)
+    tar -xzf "$archive" -C "$tmpdir"
+    sql_file=$(find "$tmpdir" -name '*.sql' | head -n1)
+    if [[ -z "$sql_file" ]]; then
+        echo "SQL file not found in archive" >&2
+        rm -rf "$tmpdir"
+        exit 1
+    fi
+
+    docker compose exec -T "$DB_CONTAINER" sh -c 'mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"' < "$sql_file"
+    rm -rf "$tmpdir"
+    echo "Database restored."
+}
+
+cmd_edit_db() {
+    ensure_in_dir
+    ensure_env_loaded
+    confirm_db
+    docker compose exec "$DB_CONTAINER" sh -c 'mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"'
+}
+
+ensure_webhook_env() {
+    ensure_env_loaded
+    if [[ -z "${BOT_TOKEN:-}" || -z "${WEBHOOK_URL:-}" ]]; then
+        echo "BOT_TOKEN or WEBHOOK_URL is not set in .env"
+        exit 1
+    fi
+    TELEGRAM_API="https://api.telegram.org/bot${BOT_TOKEN}"
+    WEBHOOK_FULL_URL="${WEBHOOK_URL%/}/webhook"
+}
+
+cmd_webhook_info() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/getWebhookInfo"
+    echo
+}
+
+cmd_webhook_set() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/setWebhook" -d "url=${WEBHOOK_FULL_URL}"
+    echo
+}
+
+cmd_webhook_delete() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/deleteWebhook"
+    echo
+}
+
+cmd_webhook_reset() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/deleteWebhook" >/dev/null
+    curl -s "${TELEGRAM_API}/setWebhook" -d "url=${WEBHOOK_FULL_URL}"
+    echo
+}
+
+command=${1:-help}
+case "$command" in
+    status) cmd_status ;;
+    start) cmd_start ;;
+    stop) cmd_stop ;;
+    restart) cmd_restart ;;
+    reload) cmd_reload ;;
+    logs) cmd_logs ;;
+    update) cmd_update ;;
+    backup-db) cmd_backup ;;
+    restore-db) shift; cmd_restore "$@" ;;
+    webhook-info) cmd_webhook_info ;;
+    webhook-set) cmd_webhook_set ;;
+    webhook-delete) cmd_webhook_delete ;;
+    webhook-reset) cmd_webhook_reset ;;
+    edit)
+        subcmd=${2:-}
+        case "$subcmd" in
+            .env) edit_file "$ENV_FILE" ;;
+            docker-compose.yml) edit_file "$COMPOSE_FILE" ;;
+            goods.json) edit_file "$INSTALL_DIR/goods.json" ;;
+            protocols.json)
+                if [[ -f "$INSTALL_DIR/protocols.json" ]]; then
+                    edit_file "$INSTALL_DIR/protocols.json"
+                else
+                    echo "protocols.json not found"
+                fi
+                ;;
+            db) cmd_edit_db ;;
+            *) usage; exit 1 ;;
+        esac
+        ;;
+    help|--help|-h|"") usage ;;
+    *) usage; exit 1 ;;
+esac
