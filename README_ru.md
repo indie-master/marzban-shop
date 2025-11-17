@@ -32,22 +32,36 @@ Telegram-бот для продажи и продления VPN-подписок
 ## Настройка
 
 ### Файл окружения (`.env`)
-В репозитории лежит `.env.example` с плейсхолдерами; при установке его можно скопировать в `.env` (скрипт предложит это сделать). Реальный `.env` в git не хранится. Основные переменные:
+В репозитории лежит `.env.example` с плейсхолдерами; при установке его можно скопировать в `.env` (скрипт предложит это сделать). Реальный `.env` в git не хранится. Основные переменные (значения-заглушки, замените на свои):
 - `BOT_TOKEN` – токен Telegram-бота
 - `SHOP_NAME` – отображаемое имя магазина
 - `TEST_PERIOD` – включить/выключить кнопку триала (`true`/`false`)
 - `TEST_PERIOD_DAYS` – длительность триала в днях
-- `PANEL_HOST`, `PANEL_GLOBAL`, `PANEL_USER`, `PANEL_PASS` – доступ к панели Marzban
+- `PANEL_HOST`, `PANEL_GLOBAL`, `PANEL_USER`, `PANEL_PASS` – доступ к панели Marzban (адрес API и внешний адрес подписок)
 - `PROTOCOLS_CONFIG` – путь к конфигу протоколов (например, `protocols.json`)
 - Платежи: `YOOKASSA_TOKEN`, `YOOKASSA_SHOPID`, `CRYPTO_TOKEN`, `MERCHANT_UUID`
 - Ручные оплаты: `PAY_SBER_URL`, `PAY_TBANK_URL`
 - Telegram Stars: `STARS_PAYMENT_ENABLED=true` (любое другое значение выключает Stars)
 - Админка и уведомления: `TG_INFO_CHANEL`, `ADMIN_IDS` (через запятую), `TG_BACKUP_BOT_TOKEN`, `TG_BACKUP_CHAT_ID`
 - База данных: `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_ROOT_PASS`, `DB_ADDRESS`, `DB_PORT`
-- Вебхук: `WEBHOOK_URL`, `WEBHOOK_PORT`
+- Вебхук: `WEBHOOK_URL` (без `/webhook`, например `https://bot.example.com`), `WEBHOOK_PORT`
 - Уведомления: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
 
 Редактируйте файл вручную или через `mshop edit .env` после установки. Настоящий `.env` не коммитьте в репозиторий.
+
+### Настройка вебхука
+1. Укажите `WEBHOOK_URL` в `.env` **без** суффикса `/webhook` (пример: `https://bot.example.com`).
+2. Настройте nginx, чтобы `https://домен/webhook` проксировался на бота (см. `nginx/bot.conf.example`).
+3. Перезапустите бота: `mshop restart`.
+4. Управляйте вебхуком через CLI:
+   - `mshop webhook-info` — посмотреть текущий вебхук
+   - `mshop webhook-set` — установить вебхук на `${WEBHOOK_URL}/webhook`
+   - `mshop webhook-delete` — удалить вебхук
+   - `mshop webhook-reset` — удалить и сразу установить вебхук
+5. Быстрая проверка:
+   ```bash
+   curl -I https://your-domain/webhook
+   ```
 
 ### Настройка тарифов (`goods.json`)
 Файл `goods.example.json` содержит минимальный пример; скопируйте его в `goods.json` при установке или позже. Реальный `goods.json` не хранится в git. Пример структуры:
@@ -90,6 +104,7 @@ Telegram-бот для продажи и продления VPN-подписок
 - `mshop update` — обновить репозиторий и образы, перезапустить
 - `mshop backup-db` — бэкап БД (отправка в Telegram при наличии `TG_BACKUP_BOT_TOKEN` и `TG_BACKUP_CHAT_ID`)
 - `mshop restore-db <backup.tar.gz>` — восстановление БД
+- `mshop webhook-info|webhook-set|webhook-delete|webhook-reset` — управление вебхуком Telegram через `WEBHOOK_URL` + `/webhook`
 - `mshop help` — справка
 
 ## CLI для nginx (`mnginx`)

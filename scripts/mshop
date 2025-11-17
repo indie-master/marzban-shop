@@ -13,21 +13,25 @@ usage() {
 Usage: mshop <command>
 
 Commands:
-  status                 Show docker compose service status
-  start                  Start services (docker compose up -d)
-  stop                   Stop services (docker compose down)
-  restart                Restart services
-  reload                 Restart bot container only
-  logs                   Tail bot container logs
-  edit .env              Edit .env
-  edit docker-compose.yml Edit docker-compose.yml
-  edit goods.json        Edit goods.json
-  edit protocols.json    Edit protocols.json if present
-  edit db                Open mysql shell inside DB container (dangerous)
-  update                 Pull repository and containers then restart
-  backup-db              Create DB backup and optional Telegram upload
-  restore-db <archive>   Restore DB from archive
-  help                   Show this message
+  status                   Show docker compose service status
+  start                    Start services (docker compose up -d)
+  stop                     Stop services (docker compose down)
+  restart                  Restart services
+  reload                   Restart bot container only
+  logs                     Tail bot container logs
+  edit .env                Edit .env
+  edit docker-compose.yml  Edit docker-compose.yml
+  edit goods.json          Edit goods.json
+  edit protocols.json      Edit protocols.json if present
+  edit db                  Open mysql shell inside DB container (dangerous)
+  update                   Pull repository and containers then restart
+  backup-db                Create DB backup and optional Telegram upload
+  restore-db <archive>     Restore DB from archive
+  webhook-info             Show current Telegram webhook info
+  webhook-set              Set Telegram webhook to ${WEBHOOK_URL}/webhook
+  webhook-delete           Delete Telegram webhook
+  webhook-reset            Delete and set Telegram webhook
+  help                     Show this message
 USAGE
 }
 
@@ -135,6 +139,41 @@ cmd_edit_db() {
     docker compose exec "$DB_CONTAINER" sh -c 'mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"'
 }
 
+ensure_webhook_env() {
+    ensure_env_loaded
+    if [[ -z "${BOT_TOKEN:-}" || -z "${WEBHOOK_URL:-}" ]]; then
+        echo "BOT_TOKEN or WEBHOOK_URL is not set in .env"
+        exit 1
+    fi
+    TELEGRAM_API="https://api.telegram.org/bot${BOT_TOKEN}"
+    WEBHOOK_FULL_URL="${WEBHOOK_URL%/}/webhook"
+}
+
+cmd_webhook_info() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/getWebhookInfo"
+    echo
+}
+
+cmd_webhook_set() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/setWebhook" -d "url=${WEBHOOK_FULL_URL}"
+    echo
+}
+
+cmd_webhook_delete() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/deleteWebhook"
+    echo
+}
+
+cmd_webhook_reset() {
+    ensure_webhook_env
+    curl -s "${TELEGRAM_API}/deleteWebhook" >/dev/null
+    curl -s "${TELEGRAM_API}/setWebhook" -d "url=${WEBHOOK_FULL_URL}"
+    echo
+}
+
 command=${1:-help}
 case "$command" in
     status) cmd_status ;;
@@ -146,6 +185,10 @@ case "$command" in
     update) cmd_update ;;
     backup-db) cmd_backup ;;
     restore-db) shift; cmd_restore "$@" ;;
+    webhook-info) cmd_webhook_info ;;
+    webhook-set) cmd_webhook_set ;;
+    webhook-delete) cmd_webhook_delete ;;
+    webhook-reset) cmd_webhook_reset ;;
     edit)
         subcmd=${2:-}
         case "$subcmd" in
@@ -166,4 +209,3 @@ case "$command" in
     help|--help|-h|"") usage ;;
     *) usage; exit 1 ;;
 esac
-

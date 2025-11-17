@@ -50,10 +50,10 @@ clone_or_update_repo() {
     fi
 }
 
-copy_if_missing() {
+copy_or_link_prompt() {
     local src=$1
     local dst=$2
-    local prompt=$3
+    local label=$3
 
     if [[ -f "$dst" ]]; then
         echo "$dst already exists; leaving it untouched."
@@ -61,7 +61,7 @@ copy_if_missing() {
     fi
 
     if [[ -f "$src" ]]; then
-        read -r -p "$prompt [Y/n]: " ans
+        read -r -p "$label Create it from $(basename "$src")? [Y/n]: " ans
         if [[ "$ans" =~ ^[Nn]$ ]]; then
             echo "Skipping creation of $dst. Please create it manually."
             return
@@ -76,7 +76,8 @@ copy_if_missing() {
 
 ensure_files() {
     cd "$INSTALL_DIR"
-    copy_if_missing "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env" ".env not found. Create it from .env.example?"
+
+    copy_or_link_prompt "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env" ".env not found." || true
 
     if [[ ! -f "$INSTALL_DIR/goods.example.json" ]]; then
         cat <<'JSON' > "$INSTALL_DIR/goods.example.json"
@@ -91,7 +92,8 @@ ensure_files() {
 ]
 JSON
     fi
-    copy_if_missing "$INSTALL_DIR/goods.example.json" "$INSTALL_DIR/goods.json" "goods.json not found. Create it from goods.example.json?"
+
+    copy_or_link_prompt "$INSTALL_DIR/goods.example.json" "$INSTALL_DIR/goods.json" "goods.json not found." || true
 }
 
 update_env_value() {
@@ -236,4 +238,3 @@ main() {
 }
 
 main "$@"
-
