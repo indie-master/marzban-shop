@@ -16,12 +16,12 @@ from keyboards import (
     get_manual_admin_keyboard,
 )
 
-    from db.methods import (
-        add_manual_payment,
-        get_latest_manual_payment_by_status,
-        get_manual_payment,
-        update_manual_payment,
-    )
+from db.methods import (
+    add_manual_payment,
+    get_latest_manual_payment_by_status,
+    get_manual_payment,
+    update_manual_payment,
+)
 from utils import goods, yookassa, cryptomus, get_i18n_string
 from utils.payments import process_successful_payment, format_expire
 import glv
