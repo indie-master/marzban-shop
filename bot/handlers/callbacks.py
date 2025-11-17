@@ -23,7 +23,6 @@ from db.methods import (
     get_latest_manual_payment_by_status,
     get_manual_payment,
     update_manual_payment,
-    had_test_sub,
 )
 from utils import goods, yookassa, cryptomus, get_i18n_string
 from utils.payments import process_successful_payment, format_expire
