@@ -15,38 +15,45 @@ def get_payment_keyboard(good) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text="Oh no...",
-                callback_data=f"none"
+                callback_data="none",
             )
         )
-        return builder.as_markup()
-    if yoo:
-        builder.row(
-            InlineKeyboardButton(
-                text=_("YooKassa - ₽"),
-                callback_data=f"pay_kassa_{good['callback']}"
+    else:
+        if yoo:
+            builder.row(
+                InlineKeyboardButton(
+                    text=_("YooKassa - ₽"),
+                    callback_data=f"pay_kassa_{good['callback']}"
+                )
             )
-        )
-    if crypt:
-        builder.row(
-            InlineKeyboardButton(
-                text=f"Cryptomus - $",
-                callback_data=f"pay_crypto_{good['callback']}"
+        if crypt:
+            builder.row(
+                InlineKeyboardButton(
+                    text="Cryptomus - $",
+                    callback_data=f"pay_crypto_{good['callback']}"
+                )
             )
-        )
-   
-    if stars:
-        builder.row(
-            InlineKeyboardButton(
-                text=f"Telegram Stars - ⭐️",
-                callback_data=f"pay_stars_{good['callback']}"
-            )
-        )
 
-    if manual:
-        builder.row(
-            InlineKeyboardButton(
-                text=_("Card transfer"),
-                callback_data=f"pay_manual_{good['callback']}"
+        if stars:
+            builder.row(
+                InlineKeyboardButton(
+                    text="Telegram Stars - ⭐️",
+                    callback_data=f"pay_stars_{good['callback']}"
+                )
             )
+
+        if manual:
+            builder.row(
+                InlineKeyboardButton(
+                    text=_("Card transfer"),
+                    callback_data=f"pay_manual_{good['callback']}"
+                )
+            )
+
+    builder.row(
+        InlineKeyboardButton(
+            text=_("⬅️ Назад"),
+            callback_data="back:buy_menu",
         )
+    )
     return builder.as_markup()

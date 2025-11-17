@@ -14,6 +14,8 @@ from keyboards import (
     get_xtr_pay_keyboard,
     get_manual_payment_keyboard,
     get_manual_admin_keyboard,
+    get_buy_menu_keyboard,
+    get_main_menu_keyboard,
 )
 
 from db.methods import (
@@ -339,6 +341,36 @@ async def callback_payment_method_select(callback: CallbackQuery):
     await callback.message.delete()
     good = goods.get(callback.data)
     await callback.message.answer(text=_("Select payment method ⬇️"), reply_markup=get_payment_keyboard(good))
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back:buy_menu")
+async def callback_back_to_buy_menu(callback: CallbackQuery):
+    keyboard = get_buy_menu_keyboard()
+    text = _("Choose the appropriate tariff ⬇️")
+    try:
+        await callback.message.edit_text(text=text, reply_markup=keyboard)
+    except Exception:
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        await callback.message.answer(text=text, reply_markup=keyboard)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back:main")
+async def callback_back_to_main(callback: CallbackQuery):
+    had_test_subscription = await had_test_sub(callback.from_user.id)
+    text = _("Hello, {name} 👋🏻\n\nSelect an action ⬇️").format(
+        name=callback.from_user.first_name,
+        title=glv.config.get('SHOP_NAME', 'VPN Shop'),
+    )
+    try:
+        await callback.message.delete()
+    except Exception:
+        pass
+    await callback.message.answer(text, reply_markup=get_main_menu_keyboard(had_test_subscription))
     await callback.answer()
 
 

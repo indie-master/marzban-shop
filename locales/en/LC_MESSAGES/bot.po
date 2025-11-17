@@ -74,6 +74,10 @@ msgstr ""
 msgid "⏪ Back"
 msgstr ""
 
+#: bot/keyboards/back.py:9 bot/keyboards/buy_menu.py:18 bot/keyboards/payments.py:43 bot/keyboards/subscription.py:17
+msgid "⬅️ Назад"
+msgstr "⬅️ Back"
+
 #: bot/keyboards/buy_menu.py:11
 msgid "{title} - {price_ru}₽"
 msgstr ""

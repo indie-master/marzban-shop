@@ -12,4 +12,10 @@ def get_subscription_keyboard(subscription_url) -> InlineKeyboardMarkup:
             web_app=WebAppInfo(url=subscription_url)
         )
     )
+    builder.row(
+        InlineKeyboardButton(
+            text=_("⬅️ Назад"),
+            callback_data="back:main",
+        )
+    )
     return builder.as_markup()
