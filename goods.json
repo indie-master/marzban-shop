@@ -1,0 +1,13 @@
+[
+  {
+    "title": "Basic VPN",
+    "price": {
+      "en": 1,
+      "ru": 100,
+      "stars": 50
+    },
+    "callback": "basic_vpn",
+    "months": 1,
+    "description": "Example tariff; replace with your real plans"
+  }
+]

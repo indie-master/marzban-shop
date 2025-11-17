@@ -1,140 +1,120 @@
 # Marzban Shop
 
-It is a Telegram bot shop powered by aiogram that provides VPN sales via Telegram
-This project is a fork. [Original project](https://github.com/gunsh1p/marzban-shop).
+> 🇷🇺 Russian version: [README_ru.md](README_ru.md)
 
-## Table of Contents
+Telegram bot shop for selling and renewing VPN subscriptions via Marzban. The bot uses aiogram v3 and supports multiple payment methods, localized UI, and webhook-based delivery.
 
-- [Features](#features)
-- [Dependencies](#dependencies)
-- [Installation guide](#installation-guide)
-- [Configuration](#configuration)
-- [To Do](#to-do)
-- [Contributing](#contributing)
-- [Donation](#donation)
-- [License](#license)
-- [Contacts](#contacts)
+## Features
+- Manual card payments via short links (Sber / T-Bank)
+- YooKassa, Cryptomus, and Telegram Stars payments
+- Trial subscriptions controlled by environment settings
+- English and Russian localization
+- CLI utilities for bot and nginx management
+- One-click installer script
 
-### Features
+## Requirements
+- Linux server with root access
+- Docker and Docker Compose plugin
+- nginx with valid TLS certificates (Let’s Encrypt recommended)
+- Telegram bot token and access to your Marzban panel
 
-- Test subscriptions
-- Two payment methods: [Cryptomus](https://cryptomus.com/) and [YooKassa](https://yookassa.ru/)
-- Interface in Russian and English
+## Quick install (one-click)
+1. Download and run the installer (update REPO_URL inside `install.sh` to your fork if needed):
+   ```bash
+   curl -O https://raw.githubusercontent.com/USER/marzban-shop/main/install.sh
+   chmod +x install.sh
+   sudo ./install.sh
+   ```
+2. Follow the prompts to fill in key `.env` values and configure nginx.
+3. After installation, you can manage the bot with `mshop` and nginx with `mnginx`.
 
-### Dependencies
+## Configuration
 
-- [Docker](https://www.docker.com/)
+### Environment file (`.env`)
+A template `.env` with placeholders is included in the repo. Key settings:
+- `BOT_TOKEN` – Telegram bot token
+- `SHOP_NAME` – Shop display name
+- `TEST_PERIOD` – Enable/disable trial button (`true`/`false`)
+- `TEST_PERIOD_DAYS` – Trial duration in days
+- `PANEL_HOST`, `PANEL_GLOBAL`, `PANEL_USER`, `PANEL_PASS` – Marzban panel access
+- `PROTOCOLS_CONFIG` – Path to protocol config (e.g., `protocols.json`)
+- Payment gateways: `YOOKASSA_TOKEN`, `YOOKASSA_SHOPID`, `CRYPTO_TOKEN`, `MERCHANT_UUID`
+- Manual payment links: `PAY_SBER_URL`, `PAY_TBANK_URL`
+- Telegram Stars toggle: `STARS_PAYMENT_ENABLED=true` (any other value disables Stars)
+- Admin and notifications: `TG_INFO_CHANEL`, `ADMIN_IDS` (comma-separated), `TG_BACKUP_BOT_TOKEN`, `TG_BACKUP_CHAT_ID`
+- Database: `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_ROOT_PASS`, `DB_ADDRESS`, `DB_PORT`
+- Webhook: `WEBHOOK_URL`, `WEBHOOK_PORT`
+- Notifications: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
 
-### Installation guide
+Edit the file manually or with `mshop edit .env` after installation.
 
-#### Setup
-
-```bash
-git clone https://github.com/indie-master/marzban-shop.git
-cd marzban-shop
-docker compose build
-```
-
-After that edit goods.example.json
-```bash
-nano goods.example.json
-```
-
-##### Good example
-
+### Goods configuration (`goods.json`)
+`goods.json` holds your tariffs. A minimal example is provided:
 ```json
-{
-        "title": <your_title_here>,
-        "price": {
-            "en": <price_for_crypto_payments>,
-            "ru": <price_for_yookassa_payments>,
-            "stars": <price_for_telegram_payments>
-        },
-        "callback": <unique_id_for_good>,
-        "months": <umber_of_months>
-    }
+[
+  {
+    "title": "Basic VPN",
+    "price": {"en": 1, "ru": 100, "stars": 50},
+    "callback": "basic_vpn",
+    "months": 1,
+    "description": "Example tariff; replace with your real plans"
+  }
+]
 ```
+Update titles, prices, months, and callbacks to match your offerings.
 
-And edit .env.example file (see [configuration](#configuration))
-```bash
-nano .env.example
-```
+### Protocols configuration
+`protocols.json` defines protocol options and inbound names for Marzban. Adjust the file to match your panel inbounds and set `PROTOCOLS_CONFIG=protocols.json` in `.env`.
 
-After all run this code
+## nginx configuration
+Example configs are provided in `nginx/`:
+- `nginx/nginx.conf.example` – base nginx config with optional `stream {}` block for TLS passthrough/SNI sharing of port 443.
+- `nginx/bot.conf.example` – site config with HTTP→HTTPS redirect, Let’s Encrypt challenge location, webhook proxy (`/webhook` → `127.0.0.1:8080/webhook`), and payment link placeholders (`/pay/sber`, `/pay/tbank`).
 
-```bash
-mv goods.example.json goods.json
-mv .env.example .env
-```
+Setup steps (also automated by `install.sh`):
+1. Copy the example configs to `/etc/nginx/nginx.conf` and `/etc/nginx/sites-available/bot.conf`, adjusting the domain.
+2. Create a symlink to `/etc/nginx/sites-enabled/bot.conf`.
+3. Test config with `nginx -t` and reload.
+4. Obtain certificates with Certbot, e.g. `certbot --nginx -d bot.example.com --email admin@example.com --agree-tos --redirect`.
 
-#### Run
+## CLI for the bot (`mshop`)
+`mshop` is installed to `/usr/local/bin/mshop` by the installer.
 
-```bash
-docker compose up -d
-```
+Commands:
+- `mshop status` – Show container status
+- `mshop start` / `mshop stop` / `mshop restart`
+- `mshop reload` – Restart bot container
+- `mshop logs` – Tail bot logs
+- `mshop edit .env|docker-compose.yml|goods.json|protocols.json|db` – Edit configs or open DB shell (with warning)
+- `mshop update` – Pull repo and images, restart
+- `mshop backup-db` – Create DB backup (uploads to Telegram if `TG_BACKUP_BOT_TOKEN` and `TG_BACKUP_CHAT_ID` set)
+- `mshop restore-db <backup.tar.gz>` – Restore DB from backup
+- `mshop help` – Show help
 
-### Configuration
+## CLI for nginx (`mnginx`)
+`mnginx` is installed to `/usr/local/bin/mnginx` by the installer.
 
-> You can set settings below using environment variables or placing them in `.env` file.
+Commands:
+- `mnginx status|start|stop|restart`
+- `mnginx enable` – Enable nginx service and bot site symlink
+- `mnginx reload` / `mnginx test`
+- `mnginx logs` – Follow nginx logs
+- `mnginx update` – Copy example configs to nginx and reload
+- `mnginx version` – Show nginx version
+- `mnginx help` – Show help
 
-| Variable        | Description |
-|-|-|
-| BOT_TOKEN | Telegram bot token obtained from BotFather |
-| SHOP_NAME | Name of the VPN shop |
-| TEST_PERIOD | Availability of test period (bool: true or false) |
-| PERIOD_LIMIT | Test period limit |
-| ABOUT | Service information |
-| RULES_LINK | Link to service rules |
-| SUPPORT_LINK | Link to service support |
-| YOOKASSA_TOKEN | YooKassa's token |
-| YOOKASSA_SHOPID | YooKassa's shopId |
-| EMAIL | Email for receipts |
-| CRYPTO_TOKEN | Cryptomus token |
-| MERCHANT_UUID | Cryptomus' Merchant UUID |
-| DB_NAME | Database name |
-| DB_USER | Database username |
-| DB_PASS | Database password |
-| DB_PORT | Database port on host machine |
-| PANEL_HOST | URL to connect to the marzban panel (if installed on the same server as marzban-shop, specify localhost and port of the panel) |
-| PANEL_GLOBAL | URL to issue subscriptions (this parameter may be different from PANEL_HOST, more details [here](#difference-between-host-and-global)) |
-| PANEL_USER | Panel username |
-| PANEL_PASS | Panel password |
-| WEBHOOK_URL | Webhook adress (url) (more deteails [here](#about-webhook)) |
-| WEBHOOK_PORT | Webhook port |
-| RENEW_NOTIFICATION_TIME | Scheduled time for exececute notify renew subscription task in format HH:mm |
-| EXPIRED_NOTIFICATION_TIME | Scheduled time for exececute notify users about expired subscription task in format HH:mm |
-| TG_INFO_CHANEL | Telegram chanel link |
-| STARS_PAYMENT_ENABLED | Enable stars payment |
+## Backup & restore
+- Create backup: `mshop backup-db` (stores archive under `backups/` and optionally sends to Telegram).
+- Restore: `mshop restore-db <path/to/archive.tar.gz>` (prompts before overwriting).
 
-#### Difference between host and global
+## Update
+- Bot and services: `mshop update`
+- nginx configs: `mnginx update`
 
-There are two environment variables PANEL_HOST and PANEL_GLOBAL
+## Troubleshooting
+- Check bot logs: `mshop logs`
+- Test nginx config: `mnginx test`
+- Reload nginx: `mnginx reload`
+- Verify webhook: `curl -I https://your-domain.com/webhook`
 
-PANEL_HOST - address of the panel for interaction with API. If the panel is on the same server as marzban-shop, then localhost should be specified as the address. For example, <http://localhost:8080>
-
-PANEL_GLOBAL - address for issuing subscriptions. It is used for substitution of a link to the subscription. It should be accessible not only in the local network, but also outside it
-
-!WARNING! If the XRAY_SUBSCRIPTION_LINK variable in your marzban panel is set, leave the PANEL_GLOBAL variable empty
-
-#### About webhook
-
-To receive responses from the Telegram server and payment provider servers, webhook is used. This should be the address to which all these servers will contact. It must be a domain with TLS 1.2 or higher. Requests should be routed to the port you specified in .env in the WEBHOOK_PORT variable.
-In addition, for YooKassa to work correctly, you will need to specify a webhook url in your personal account with the following value at the end of /yookassa_payment (e.g. <https://my-awesome-webhook.example.com/yookassa_payment>) and select all values that begin with payment
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### License
-
-The project is under the [GPL-3.0](https://github.com/gunsh1p/marzban-shop/blob/main/LICENSE) licence
-
+Ensure your domain points to the server and certificates are valid when using webhooks.
