@@ -90,7 +90,7 @@ async def test_subscription(message: Message):
         reply_markup=get_main_menu_keyboard(True)
     )
     
-@router.message(F.text.in_({__("⏪ Back"), __("⬅️ Назад")}))
+@router.message(F.text.in_([__("⏪ Back"), __("⬅️ Назад")]))
 async def start_text(message: Message):
     await start(message)
 
