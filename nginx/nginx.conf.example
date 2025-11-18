@@ -1,0 +1,25 @@
+user www-data;
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+
+# Optional stream block for TLS passthrough and SNI-based routing.
+# Use this if you need to share port 443 between multiple services
+# (e.g., Marzban panel and the bot webhook) while terminating TLS elsewhere.
+stream {
+    # Example placeholder: configure upstreams and server blocks here
+    # to forward traffic based on SNI to different backends.
+}

@@ -13,7 +13,13 @@ def get_buy_menu_keyboard() -> InlineKeyboardMarkup:
                 price_en=good['price']['en'],
                 price_ru=good['price']['ru'],
                 price_stars=good['price']['stars']
-                ), 
+                ),
             callback_data=good['callback'])
         )
+    builder.row(
+        InlineKeyboardButton(
+            text=_("⬅️ Назад"),
+            callback_data="back:main",
+        )
+    )
     return builder.as_markup()

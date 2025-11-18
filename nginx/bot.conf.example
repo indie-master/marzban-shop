@@ -1,0 +1,39 @@
+# HTTP server for Let's Encrypt validation and redirect to HTTPS
+server {
+    listen 80;
+    server_name bot.example.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS server for the bot webhook and payment links
+server {
+    listen 443 ssl http2;
+    server_name bot.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/bot.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/bot.example.com/privkey.pem;
+
+    location /webhook {
+        proxy_pass http://127.0.0.1:8080/webhook;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Payment link placeholders. Replace return URLs with your bank collection links.
+    location /pay/sber {
+        return 302 https://bank.example.com/sber;
+    }
+
+    location /pay/tbank {
+        return 302 https://bank.example.com/tbank;
+    }
+}

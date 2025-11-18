@@ -1,9 +1,9 @@
 import hashlib
 
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy import insert, select, update, delete
+from sqlalchemy import insert, select, update, delete, desc
 
-from db.models import YPayments, CPayments, VPNUsers
+from db.models import YPayments, CPayments, VPNUsers, ManualPayments
 import glv
 
 engine = create_async_engine(glv.config['DB_URL'])
@@ -75,3 +75,54 @@ async def delete_payment(payment_id):
         sql_q = delete(CPayments).where(CPayments.payment_uuid == payment_id)
         await conn.execute(sql_q)
         await conn.commit()
+
+
+async def add_manual_payment(
+    tg_id: int,
+    callback: str,
+    chat_id: int,
+    lang_code: str,
+    username: str | None = None,
+    status: str = "manual_pending",
+    plan_name: str | None = None,
+    amount: str | None = None,
+) -> int:
+    async with engine.connect() as conn:
+        sql_q = insert(ManualPayments).values(
+            tg_id=tg_id,
+            username=username,
+            callback=callback,
+            chat_id=chat_id,
+            lang=lang_code,
+            status=status,
+            plan_name=plan_name,
+            amount=amount,
+        )
+        result = await conn.execute(sql_q)
+        await conn.commit()
+        return result.inserted_primary_key[0]
+
+
+async def get_manual_payment(payment_id) -> ManualPayments:
+    async with engine.connect() as conn:
+        sql_q = select(ManualPayments).where(ManualPayments.id == payment_id)
+        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
+    return payment
+
+
+async def update_manual_payment(payment_id, **kwargs):
+    async with engine.connect() as conn:
+        sql_q = update(ManualPayments).where(ManualPayments.id == payment_id).values(**kwargs)
+        await conn.execute(sql_q)
+        await conn.commit()
+
+
+async def get_latest_manual_payment_by_status(tg_id: int, statuses: list[str]) -> ManualPayments | None:
+    async with engine.connect() as conn:
+        sql_q = (
+            select(ManualPayments)
+            .where(ManualPayments.tg_id == tg_id, ManualPayments.status.in_(statuses))
+            .order_by(desc(ManualPayments.id))
+        )
+        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
+    return payment

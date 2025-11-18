@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -e
+
+NGINX_SERVICE="nginx"
+NGINX_CONF="/etc/nginx/nginx.conf"
+SITE_AVAILABLE="/etc/nginx/sites-available/bot.conf"
+SITE_ENABLED="/etc/nginx/sites-enabled/bot.conf"
+INSTALL_DIR="/opt/marzban-shop"
+NGINX_EXAMPLE_CONF="$INSTALL_DIR/nginx/nginx.conf.example"
+NGINX_BOT_EXAMPLE_CONF="$INSTALL_DIR/nginx/bot.conf.example"
+
+usage() {
+    cat <<USAGE
+Usage: mnginx <command>
+
+Commands:
+  status       Show nginx service status
+  enable       Enable nginx service and bot site
+  start        Start nginx
+  stop         Stop nginx
+  restart      Restart nginx
+  reload       Reload nginx after config test
+  test         Test nginx configuration
+  logs         Tail nginx logs (journalctl)
+  update       Copy example configs to nginx directories
+  version      Show nginx version
+  help         Show this message
+USAGE
+}
+
+cmd_status() { systemctl status "$NGINX_SERVICE" --no-pager; }
+cmd_start() { systemctl start "$NGINX_SERVICE"; }
+cmd_stop() { systemctl stop "$NGINX_SERVICE"; }
+cmd_restart() { systemctl restart "$NGINX_SERVICE"; }
+cmd_test() { nginx -t; }
+cmd_logs() { journalctl -u "$NGINX_SERVICE" -f; }
+
+cmd_enable() {
+    systemctl enable "$NGINX_SERVICE"
+    if [[ -f "$SITE_AVAILABLE" && ! -L "$SITE_ENABLED" ]]; then
+        ln -s "$SITE_AVAILABLE" "$SITE_ENABLED"
+    fi
+    echo "nginx enabled and site symlink ensured."
+}
+
+cmd_reload() {
+    if nginx -t; then
+        systemctl reload "$NGINX_SERVICE"
+    else
+        echo "nginx config test failed"
+        exit 1
+    fi
+}
+
+cmd_update() {
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+    if [[ -f "$NGINX_EXAMPLE_CONF" ]]; then
+        read -r -p "Copy nginx.conf.example to $NGINX_CONF? [Y/n]: " copy_main
+        if [[ ! "$copy_main" =~ ^[Nn]$ ]]; then
+            cp "$NGINX_EXAMPLE_CONF" "$NGINX_CONF"
+        fi
+    fi
+    if [[ -f "$NGINX_BOT_EXAMPLE_CONF" ]]; then
+        read -r -p "Copy bot.conf.example to $SITE_AVAILABLE? [Y/n]: " copy_site
+        if [[ ! "$copy_site" =~ ^[Nn]$ ]]; then
+            cp "$NGINX_BOT_EXAMPLE_CONF" "$SITE_AVAILABLE"
+        fi
+    fi
+    if [[ -f "$SITE_AVAILABLE" && ! -L "$SITE_ENABLED" ]]; then
+        ln -s "$SITE_AVAILABLE" "$SITE_ENABLED"
+    fi
+    cmd_reload
+}
+
+cmd_version() { nginx -v; }
+
+case "$1" in
+    status) cmd_status ;;
+    enable) cmd_enable ;;
+    start) cmd_start ;;
+    stop) cmd_stop ;;
+    restart) cmd_restart ;;
+    reload) cmd_reload ;;
+    test) cmd_test ;;
+    logs) cmd_logs ;;
+    update) cmd_update ;;
+    version) cmd_version ;;
+    help|--help|-h|"") usage ;;
+    *) usage ; exit 1 ;;
+esac
