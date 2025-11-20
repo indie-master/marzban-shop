@@ -7,4 +7,5 @@ cryptography
 requests
 pyCryptomusAPI
 yookassa
+alembic
 aioschedule

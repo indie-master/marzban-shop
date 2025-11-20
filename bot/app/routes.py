@@ -7,11 +7,9 @@ from aiohttp.web_request import Request
 from aiohttp import web
 
 from db.methods import (
-    delete_payment,
-    get_cryptomus_payment,
-    get_links_by_tg_id,
-    get_manual_payment_links,
     get_yookassa_payment,
+    get_cryptomus_payment,
+    delete_payment
 )
 from utils import webhook_data
 from utils.payments import process_successful_payment
@@ -38,11 +36,7 @@ async def check_crypto_payment(request: Request):
     if payment == None:
         return web.Response()
     if data['status'] in ['paid', 'paid_over']:
-        marzban_usernames = await get_manual_payment_links(payment.id)
-        if not marzban_usernames:
-            links = await get_links_by_tg_id(payment.tg_id)
-            marzban_usernames = [links[0].marzban_user] if links else []
-        await process_successful_payment(payment, marzban_usernames)
+        await process_successful_payment(payment.tg_id, payment.callback, payment.chat_id, payment.lang)
         await delete_payment(payment.payment_uuid)
     if data['status'] == 'cancel':
         await delete_payment(payment.payment_uuid)
@@ -67,11 +61,7 @@ async def check_yookassa_payment(request: Request):
     if payment == None:
         return web.Response()
     if data['status'] in ['succeeded']:
-        marzban_usernames = await get_manual_payment_links(payment.id)
-        if not marzban_usernames:
-            links = await get_links_by_tg_id(payment.tg_id)
-            marzban_usernames = [links[0].marzban_user] if links else []
-        await process_successful_payment(payment, marzban_usernames)
+        await process_successful_payment(payment.tg_id, payment.callback, payment.chat_id, payment.lang)
         await delete_payment(payment.payment_id)
     if data['status'] == 'canceled':
         await delete_payment(payment.payment_id)

@@ -41,10 +41,6 @@ ensure_env_loaded() {
         # shellcheck disable=SC1090
         . "$ENV_FILE"
         set +a
-        # Normalize DB variables for compatibility
-        export DB_PASS="${DB_PASS:-${DB_PASSWORD:-}}"
-        export DB_PASSWORD="${DB_PASSWORD:-${DB_PASS:-}}"
-        export DB_HOST="${DB_HOST:-${DB_ADDRESS:-db}}"
     fi
 }
 
@@ -78,6 +74,7 @@ cmd_stop() { ensure_in_dir; docker compose down; }
 cmd_restart() { ensure_in_dir; docker compose down && docker compose up -d; }
 cmd_reload() { ensure_in_dir; docker compose restart "$BOT_CONTAINER"; }
 cmd_logs() { ensure_in_dir; docker compose logs -f "$BOT_CONTAINER"; }
+
 cmd_update() {
     ensure_in_dir
     git pull

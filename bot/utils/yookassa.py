@@ -8,12 +8,11 @@ import glv
 if glv.config['YOOKASSA_SHOPID'] and glv.config['YOOKASSA_TOKEN']:
     Configuration.configure(glv.config['YOOKASSA_SHOPID'], glv.config['YOOKASSA_TOKEN'])
 
-async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str, total_amount: str | None = None) -> dict:
+async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str) -> dict:
     good = goods.get(callback)
-    amount_value = total_amount or good['price']['ru']
     resp = Payment.create({
         "amount": {
-            "value": amount_value,
+            "value": good['price']['ru'],
             "currency": "RUB"
         },
         "confirmation": {
@@ -32,7 +31,7 @@ async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str
                     "description": f"Подписка на VPN сервис: кол-во месяцев - {good['months']}",
                     "quantity": "1",
                     "amount": {
-                        "value": amount_value,
+                        "value": good['price']['ru'],
                         "currency": "RUB"
                     },
                     "vat_code": "1"
@@ -40,9 +39,8 @@ async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str
             ]
         }
         })
-    payment_db_id = await add_yookassa_payment(tg_id, callback, chat_id, lang_code, resp.id)
+    await add_yookassa_payment(tg_id, callback, chat_id, lang_code, resp.id)
     return {
         "url": resp.confirmation.confirmation_url,
-        "amount": resp.amount.value,
-        "payment_db_id": payment_db_id,
+        "amount": resp.amount.value
     }

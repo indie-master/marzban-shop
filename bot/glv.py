@@ -2,13 +2,6 @@ import os
 
 from aiogram import Bot, Dispatcher
 
-db_user = os.environ.get('DB_USER') or os.environ.get('DB_USERNAME')
-db_password = os.environ.get('DB_PASSWORD') or os.environ.get('DB_PASS')
-db_host = os.environ.get('DB_HOST') or os.environ.get('DB_ADDRESS') or 'db'
-db_port = os.environ.get('DB_PORT') or '3306'
-db_name = os.environ.get('DB_NAME') or 'marzban_shop'
-
-
 config = {
     'BOT_TOKEN': os.environ.get('BOT_TOKEN'),
     'SHOP_NAME': os.environ.get('SHOP_NAME'),
@@ -19,7 +12,7 @@ config = {
     'ABOUT': os.environ.get('ABOUT'),
     'RULES_LINK': os.environ.get('RULES_LINK'),
     'SUPPORT_LINK': os.environ.get('SUPPORT_LINK'),
-    'DB_URL': f"mysql+asyncmy://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
+    'DB_URL': f"mysql+asyncmy://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASS')}@{os.environ.get('DB_ADDRESS')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
     'YOOKASSA_TOKEN': os.environ.get('YOOKASSA_TOKEN'),
     'YOOKASSA_SHOPID': os.environ.get('YOOKASSA_SHOPID'),
     'EMAIL': os.environ.get('EMAIL'),
