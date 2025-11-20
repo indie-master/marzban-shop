@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
 
-from db.methods import get_marzban_profile_db
+from db.methods import get_primary_user_link
+from services.user_links import build_note
 from keyboards import get_main_menu_keyboard
 from utils import goods, marzban_api
 from utils.lang import get_i18n_string
@@ -10,8 +11,12 @@ import glv
 
 async def process_successful_payment(tg_id: int, callback: str, chat_id: int, lang_code: str, send_user_message: bool = True):
     good = goods.get(callback)
-    user = await get_marzban_profile_db(tg_id)
-    marzban_result = await marzban_api.generate_marzban_subscription(user.vpn_id, good)
+    link = await get_primary_user_link(tg_id)
+    if link is None:
+        logging.error("Unable to locate Marzban link for Telegram ID %s", tg_id)
+        return {}
+    note = build_note(tg_id, link.tg_username)
+    marzban_result = await marzban_api.generate_marzban_subscription(link.marzban_user, good, note)
 
     if send_user_message:
         text = get_i18n_string(
@@ -26,10 +31,10 @@ async def process_successful_payment(tg_id: int, callback: str, chat_id: int, la
 
     expire_ts = None
     try:
-        updated_user = await marzban_api.panel.get_user(user.vpn_id)
+        updated_user = await marzban_api.panel.get_user(link.marzban_user)
         expire_ts = updated_user.get('expire')
     except Exception as e:
-        logging.warning("Failed to fetch expire date for user %s: %s", user.vpn_id, e)
+        logging.warning("Failed to fetch expire date for user %s: %s", link.marzban_user, e)
 
     return {
         "marzban_result": marzban_result,
