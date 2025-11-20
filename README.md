@@ -43,7 +43,7 @@ The repository ships `.env.example` with placeholders; copy it to `.env` during 
 - Manual payment links: `PAY_SBER_URL`, `PAY_TBANK_URL`
 - Telegram Stars toggle: `STARS_PAYMENT_ENABLED=true` (any other value disables Stars)
 - Admin and notifications: `TG_INFO_CHANEL`, `ADMIN_IDS` (comma-separated), `TG_BACKUP_BOT_TOKEN`, `TG_BACKUP_CHAT_ID`
-- Database: `DB_NAME`, `DB_USER`, `DB_PASSWORD` (or legacy `DB_PASS`), `DB_ROOT_PASS`, `DB_HOST` (service name, defaults to `db`), `DB_PORT` (`3306`)
+- Database: `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_ROOT_PASS`, `DB_ADDRESS`, `DB_PORT`
 - Webhook: `WEBHOOK_URL` (without `/webhook`, e.g., `https://bot.example.com`), `WEBHOOK_PORT`
 - Notifications: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
 
@@ -104,11 +104,8 @@ Commands:
 - `mshop update` – Pull repo and images, restart
 - `mshop backup-db` – Create DB backup (uploads to Telegram if `TG_BACKUP_BOT_TOKEN` and `TG_BACKUP_CHAT_ID` set)
 - `mshop restore-db <backup.tar.gz>` – Restore DB from backup
-- `mshop edit db` – Open a MySQL shell inside the `db` service using credentials from `.env`
 - `mshop webhook-info|webhook-set|webhook-delete|webhook-reset` – Manage Telegram webhook using `WEBHOOK_URL` + `/webhook`
 - `mshop help` – Show help
-
-The bot connects to MySQL via `DB_HOST` (defaults to the Compose service name `db`) and `DB_PORT=3306`. Ensure these values match your deployment if you override service names.
 
 ## CLI for nginx (`mnginx`)
 `mnginx` is installed to `/usr/local/bin/mnginx` by the installer.

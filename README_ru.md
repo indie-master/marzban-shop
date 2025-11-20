@@ -43,7 +43,7 @@ Telegram-бот для продажи и продления VPN-подписок
 - Ручные оплаты: `PAY_SBER_URL`, `PAY_TBANK_URL`
 - Telegram Stars: `STARS_PAYMENT_ENABLED=true` (любое другое значение выключает Stars)
 - Админка и уведомления: `TG_INFO_CHANEL`, `ADMIN_IDS` (через запятую), `TG_BACKUP_BOT_TOKEN`, `TG_BACKUP_CHAT_ID`
-- База данных: `DB_NAME`, `DB_USER`, `DB_PASSWORD` (или совместимый `DB_PASS`), `DB_ROOT_PASS`, `DB_HOST` (имя сервиса, по умолчанию `db`), `DB_PORT` (`3306`)
+- База данных: `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_ROOT_PASS`, `DB_ADDRESS`, `DB_PORT`
 - Вебхук: `WEBHOOK_URL` (без `/webhook`, например `https://bot.example.com`), `WEBHOOK_PORT`
 - Уведомления: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
 
@@ -104,11 +104,8 @@ Telegram-бот для продажи и продления VPN-подписок
 - `mshop update` — обновить репозиторий и образы, перезапустить
 - `mshop backup-db` — бэкап БД (отправка в Telegram при наличии `TG_BACKUP_BOT_TOKEN` и `TG_BACKUP_CHAT_ID`)
 - `mshop restore-db <backup.tar.gz>` — восстановление БД
-- `mshop edit db` — открыть консоль MySQL внутри сервиса `db` с использованием переменных из `.env`
 - `mshop webhook-info|webhook-set|webhook-delete|webhook-reset` — управление вебхуком Telegram через `WEBHOOK_URL` + `/webhook`
 - `mshop help` — справка
-
-Бот подключается к MySQL по `DB_HOST` (по умолчанию имя сервиса docker-compose `db`) и `DB_PORT=3306`. Если переименовываете сервисы, убедитесь, что эти значения соответствуют новой схеме.
 
 ## CLI для nginx (`mnginx`)
 Устанавливается в `/usr/local/bin/mnginx`.

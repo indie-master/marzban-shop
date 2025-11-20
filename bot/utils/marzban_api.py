@@ -4,7 +4,7 @@ import time
 import aiohttp
 import requests
 
-from db.methods import get_primary_user_link
+from db.methods import get_marzban_profile_db
 import glv
 
 PROTOCOLS_DEFAULT = {
@@ -35,7 +35,7 @@ class Marzban:
         self.ip = ip
         self.login = login
         self.passwd = passwd
-
+    
     async def _send_request(self, method, path, headers=None, data=None) -> dict | list:
         async with aiohttp.ClientSession() as session:
             async with session.request(method, self.ip + path, headers=headers, json=data) as resp:
@@ -44,7 +44,7 @@ class Marzban:
                     return body
                 else:
                     raise Exception(f"Error: {resp.status}; Body: {await resp.text()}; Data: {data}")
-
+    
     def get_token(self) -> str:
         data = {
             "username": self.login,
@@ -53,28 +53,28 @@ class Marzban:
         resp = requests.post(self.ip + "/api/admin/token", data=data).json()
         self.token = resp["access_token"]
         return self.token
-
+    
     async def get_user(self, username) -> dict:
         headers = {
             'Authorization': f"Bearer {self.token}"
         }
         resp = await self._send_request("GET", f"/api/user/{username}", headers=headers)
         return resp
-
+    
     async def get_users(self) -> dict:
         headers = {
             'Authorization': f"Bearer {self.token}"
         }
         resp = await self._send_request("GET", "/api/users", headers=headers)
         return resp
-
+    
     async def add_user(self, data) -> dict:
         headers = {
             'Authorization': f"Bearer {self.token}"
         }
         resp = await self._send_request("POST", "/api/user", headers=headers, data=data)
         return resp
-
+    
     async def modify_user(self, username, data) -> dict:
         headers = {
             'Authorization': f"Bearer {self.token}"
@@ -119,16 +119,13 @@ async def check_if_user_exists(name: str) -> bool:
         return False
 
 async def get_marzban_profile(tg_id: int):
-    link = await get_primary_user_link(tg_id)
-    if link is None:
+    result = await get_marzban_profile_db(tg_id)
+    res = await check_if_user_exists(result.vpn_id)
+    if not res:
         return None
-    try:
-        user = await panel.get_user(link.marzban_user)
-    except Exception:
-        return None
-    return user
+    return await panel.get_user(result.vpn_id)
 
-async def generate_test_subscription(username: str, note: str | None = None):
+async def generate_test_subscription(username: str):
     res = await check_if_user_exists(username)
     if res:
         user = await panel.get_user(username)
@@ -147,12 +144,10 @@ async def generate_test_subscription(username: str, note: str | None = None):
             'data_limit': 0,
             'data_limit_reset_strategy': "no_reset",
         }
-        if note:
-            user['note'] = note
         result = await panel.add_user(user)
     return result
 
-async def generate_marzban_subscription(username: str, good, note: str | None = None):
+async def generate_marzban_subscription(username: str, good):
     res = await check_if_user_exists(username)
     if res:
         user = await panel.get_user(username)
@@ -171,8 +166,6 @@ async def generate_marzban_subscription(username: str, good, note: str | None = 
             'data_limit': 0,
             'data_limit_reset_strategy': "no_reset",
         }
-        if note:
-            user['note'] = note
         result = await panel.add_user(user)
     return result
 
@@ -181,39 +174,3 @@ def get_test_subscription(days: int, additional= False) -> int:
 
 def get_subscription_end_date(months: int, additional = False) -> int:
     return (0 if additional else int(time.time())) + 60 * 60 * 24 * 30 * months
-
-
-async def get_user(username: str) -> dict | None:
-    try:
-        return await panel.get_user(username)
-    except Exception:
-        return None
-
-
-async def get_all_users() -> list[dict]:
-    response = await panel.get_users()
-    if not response:
-        return []
-    return response.get('users', [])
-
-
-async def create_user(username: str, note: str | None = None):
-    data = {
-        'username': username,
-        'proxies': ps['proxies'],
-        'inbounds': ps['inbounds'],
-        'expire': int(time.time()),
-        'data_limit': 0,
-        'data_limit_reset_strategy': 'no_reset',
-    }
-    if note:
-        data['note'] = note
-    return await panel.add_user(data)
-
-
-async def update_user_note(username: str, note: str):
-    headers = {
-        'Authorization': f"Bearer {panel.token}"
-    }
-    data = {'note': note}
-    return await panel._send_request("PUT", f"/api/user/{username}", headers=headers, data=data)
