@@ -25,7 +25,10 @@ async def notify_users_to_renew_sub():
         await glv.bot.send_message(user.tg_id, message)
 
 async def get_marzban_users_to_notify():
-    users = await marzban_api.get_all_users()
+    res = await marzban_api.panel.get_users()
+    if res is None:
+        return None
+    users = res['users']
     return filter(filter_users_to_notify, users)
 
 def filter_users_to_notify(user):

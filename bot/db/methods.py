@@ -3,7 +3,7 @@ import hashlib
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import insert, select, update, delete, desc
 
-from db.models import YPayments, CPayments, VPNUsers, ManualPayments, UserLink
+from db.models import YPayments, CPayments, VPNUsers, ManualPayments
 import glv
 
 engine = create_async_engine(glv.config['DB_URL'])
@@ -12,10 +12,10 @@ async def create_vpn_profile(tg_id: int):
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result: VPNUsers = (await conn.execute(sql_query)).fetchone()
-        if result is not None:
+        if result != None:
             return
-        vpn_hash = hashlib.md5(str(tg_id).encode()).hexdigest()
-        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=vpn_hash)
+        hash = hashlib.md5(str(tg_id).encode()).hexdigest()
+        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=hash)
         await conn.execute(sql_query)
         await conn.commit()
 
@@ -29,62 +29,7 @@ async def get_marzban_profile_by_vpn_id(vpn_id: str):
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
         result: VPNUsers = (await conn.execute(sql_query)).fetchone()
-    return result
-
-
-async def get_primary_user_link(tg_id: int) -> UserLink | None:
-    links = await get_links_by_tg_id(tg_id)
-    return links[0] if links else None
-
-
-async def get_links_by_tg_id(tg_id: int) -> list[UserLink]:
-    async with engine.connect() as conn:
-        sql_q = select(UserLink).where(UserLink.tg_id == tg_id)
-        result = (await conn.execute(sql_q)).fetchall()
-    return [row[0] for row in result]
-
-
-async def get_link_by_marzban_user(username: str) -> UserLink | None:
-    async with engine.connect() as conn:
-        sql_q = select(UserLink).where(UserLink.marzban_user == username)
-        result = (await conn.execute(sql_q)).fetchone()
-    return result[0] if result else None
-
-
-async def add_user_link(tg_id: int, tg_username: str | None, marzban_user: str):
-    async with engine.connect() as conn:
-        sql_q = insert(UserLink).values(
-            tg_id=tg_id,
-            tg_username=tg_username,
-            marzban_user=marzban_user,
-        )
-        await conn.execute(sql_q)
-        await conn.commit()
-
-
-async def update_user_link_username(tg_id: int, tg_username: str | None):
-    async with engine.connect() as conn:
-        sql_q = (
-            update(UserLink)
-            .where(UserLink.tg_id == tg_id)
-            .values(tg_username=tg_username)
-        )
-        await conn.execute(sql_q)
-        await conn.commit()
-
-
-async def delete_user_link(marzban_username: str):
-    async with engine.connect() as conn:
-        sql_q = delete(UserLink).where(UserLink.marzban_user == marzban_username)
-        await conn.execute(sql_q)
-        await conn.commit()
-
-
-async def get_all_linked_usernames() -> set[str]:
-    async with engine.connect() as conn:
-        result = await conn.execute(select(UserLink.marzban_user))
-        usernames = set(result.scalars().all())
-    return usernames
+    return result    
 
 async def had_test_sub(tg_id: int) -> bool:
     async with engine.connect() as conn:
