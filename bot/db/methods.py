@@ -3,14 +3,7 @@ import hashlib
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import insert, select, update, delete, desc
 
-from db.models import (
-    CPayments,
-    ManualPaymentLink,
-    ManualPayments,
-    UserLink,
-    VPNUsers,
-    YPayments,
-)
+from db.models import YPayments, CPayments, VPNUsers, ManualPayments, UserLink
 import glv
 
 engine = create_async_engine(glv.config['DB_URL'])
@@ -108,16 +101,14 @@ async def update_test_subscription_state(tg_id):
 async def add_yookassa_payment(tg_id: int, callback: str, chat_id: int, lang_code: str, payment_id) -> dict:
     async with engine.connect() as conn:
         sql_q = insert(YPayments).values(tg_id=tg_id, payment_id=payment_id, chat_id=chat_id, callback=callback, lang=lang_code)
-        result = await conn.execute(sql_q)
+        await conn.execute(sql_q)
         await conn.commit()
-        return result.inserted_primary_key[0]
 
 async def add_cryptomus_payment(tg_id: int, callback: str, chat_id: int, lang_code: str, data) -> dict:
     async with engine.connect() as conn:
         sql_q = insert(CPayments).values(tg_id=tg_id, payment_uuid=data['order_id'], order_id=data['order_id'], chat_id=chat_id, callback=callback, lang=lang_code)
-        result = await conn.execute(sql_q)
+        await conn.execute(sql_q)
         await conn.commit()
-        return result.inserted_primary_key[0]
 
 async def get_yookassa_payment(payment_id) -> YPayments:
     async with engine.connect() as conn:
@@ -172,21 +163,6 @@ async def get_manual_payment(payment_id) -> ManualPayments:
         sql_q = select(ManualPayments).where(ManualPayments.id == payment_id)
         payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
     return payment
-
-
-async def add_manual_payment_link(payment_id: int, marzban_user: str) -> None:
-    async with engine.connect() as conn:
-        sql_q = insert(ManualPaymentLink).values(payment_id=payment_id, marzban_user=marzban_user)
-        await conn.execute(sql_q)
-        await conn.commit()
-
-
-async def get_manual_payment_links(payment_id: int) -> list[str]:
-    async with engine.connect() as conn:
-        sql_q = select(ManualPaymentLink.marzban_user).where(ManualPaymentLink.payment_id == payment_id)
-        result = await conn.execute(sql_q)
-        usernames = list(result.scalars().all())
-    return usernames
 
 
 async def update_manual_payment(payment_id, **kwargs):

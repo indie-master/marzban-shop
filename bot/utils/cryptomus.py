@@ -7,13 +7,12 @@ from utils import goods
 from utils.webhook_data import get_sign
 import glv
 
-async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str, total_amount: str | None = None) -> dict:
+async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str) -> dict:
     good = goods.get(callback)
     prepared_str = str(tg_id) + str(time.time()) + callback
     o_id = hashlib.md5(prepared_str.encode()).hexdigest()
-    amount_value = total_amount or str(good['price']['en'])
     data = {
-        "amount": str(amount_value),
+        "amount": str(good['price']['en']),
         "currency": "USD",
         "order_id": o_id,
         "lifetime": 1800,
@@ -32,9 +31,8 @@ async def create_payment(tg_id: int, callback: str, chat_id: int, lang_code: str
                 response = (await resp.json())['result']
             else:
                 raise Exception(f"Error: {resp.status}; Body: {await resp.text()}; Data: {data}")
-    payment_db_id = await add_cryptomus_payment(tg_id, callback, chat_id, lang_code, response)
+    await add_cryptomus_payment(tg_id, callback, chat_id, lang_code, response)
     return {
         "url": response['url'],
-        "amount": response['amount'],
-        "payment_db_id": payment_db_id,
+        "amount": response['amount']
     }
