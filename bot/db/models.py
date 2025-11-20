@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, String, Boolean
+from sqlalchemy import Column, BigInteger, String, Boolean
 
 from db.base import Base
 
@@ -48,12 +48,3 @@ class ManualPayments(Base):
     proof_chat_id = Column(BigInteger)
     admin_message_id = Column(BigInteger)
     admin_chat_id = Column(BigInteger)
-
-
-class UserLink(Base):
-    __tablename__ = "user_links"
-
-    id = Column(BigInteger, primary_key=True, unique=True, autoincrement=True)
-    tg_id = Column(BigInteger, index=True, nullable=False)
-    tg_username = Column(String(64))
-    marzban_user = Column(String(64), index=True, nullable=False, unique=True)

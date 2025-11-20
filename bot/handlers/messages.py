@@ -12,8 +12,7 @@ from keyboards import (
     get_subscription_keyboard,
     get_instructions_menu_keyboard,
 )
-from db.methods import had_test_sub, update_test_subscription_state, get_primary_user_link
-from services.user_links import ensure_user_link, build_note
+from db.methods import had_test_sub, update_test_subscription_state, get_marzban_profile_db
 from utils import marzban_api
 from utils.payments import format_expire
 import glv
@@ -82,11 +81,8 @@ async def test_subscription(message: Message):
             _("Your subscription is available in the \"My subscription 👤\" section."),
             reply_markup=get_main_menu_keyboard(True))
         return
-    link = await get_primary_user_link(message.from_user.id)
-    if link is None:
-        link = await ensure_user_link(message.from_user)
-    note = build_note(message.from_user.id, message.from_user.username)
-    await marzban_api.generate_test_subscription(link.marzban_user, note)
+    result = await get_marzban_profile_db(message.from_user.id)
+    result = await marzban_api.generate_test_subscription(result.vpn_id)
     await update_test_subscription_state(message.from_user.id)
     await message.answer(
         _("Thank you for choice ❤️\n️\n<a href=\"{link}\">Subscribe</a> so you don't miss any announcements ✅\n️\nYour subscription is purchased and available in the \"My subscription 👤\" section.").format(
