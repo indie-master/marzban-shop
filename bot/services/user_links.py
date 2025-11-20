@@ -1,15 +1,18 @@
 import logging
 import secrets
+from dataclasses import dataclass
 from typing import Optional
 
 from aiogram.types import User as TelegramUser
 
 from db.methods import (
     add_user_link,
+    get_links_by_tg_id,
     get_primary_user_link,
     update_user_link_username,
 )
 from utils import marzban_api
+import glv
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +46,48 @@ async def _generate_unique_username(tg_user: TelegramUser) -> str:
         if not exists:
             return candidate
     raise RuntimeError("Failed to generate unique Marzban username for Telegram user")
+
+
+@dataclass
+class UserSubscription:
+    username: str
+    status: str
+    expire: int | None
+    used_traffic: int | None
+    data_limit: int | None
+    subscription_url: str | None
+    note: str | None
+
+
+async def get_subscriptions_for_tg(tg_id: int) -> list[UserSubscription]:
+    links = await get_links_by_tg_id(tg_id)
+    if not links:
+        return []
+
+    subscriptions: list[UserSubscription] = []
+    for link in links:
+        try:
+            user = await marzban_api.panel.get_user(link.marzban_user)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to fetch Marzban user %s for tg %s: %s", link.marzban_user, tg_id, exc)
+            continue
+
+        subscription_url = user.get('subscription_url') or None
+        links_field = user.get('links') or []
+        if not subscription_url and links_field:
+            subscription_url = links_field[0]
+        if subscription_url and subscription_url.startswith('/'):
+            subscription_url = f"{glv.config['PANEL_GLOBAL']}{subscription_url}"
+
+        subscriptions.append(
+            UserSubscription(
+                username=user.get('username') or link.marzban_user,
+                status=user.get('status') or "unknown",
+                expire=user.get('expire'),
+                used_traffic=user.get('used_traffic'),
+                data_limit=user.get('data_limit'),
+                subscription_url=subscription_url,
+                note=user.get('note'),
+            )
+        )
+    return subscriptions

@@ -50,6 +50,14 @@ class ManualPayments(Base):
     admin_chat_id = Column(BigInteger)
 
 
+class ManualPaymentLink(Base):
+    __tablename__ = "manual_payment_links"
+
+    id = Column(BigInteger, primary_key=True, unique=True, autoincrement=True)
+    payment_id = Column(BigInteger, index=True, nullable=False)
+    marzban_user = Column(String(64), index=True, nullable=False)
+
+
 class UserLink(Base):
     __tablename__ = "user_links"
 
