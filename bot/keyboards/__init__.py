@@ -7,3 +7,16 @@ from .subscription import get_subscription_keyboard
 from .xtr_pay import get_xtr_pay_keyboard
 from .manual_payment import get_manual_payment_keyboard, get_manual_admin_keyboard
 from .instructions import get_instructions_menu_keyboard
+
+__all__ = [
+    "get_main_menu_keyboard",
+    "get_buy_menu_keyboard",
+    "get_payment_keyboard",
+    "get_back_keyboard",
+    "get_pay_keyboard",
+    "get_subscription_keyboard",
+    "get_xtr_pay_keyboard",
+    "get_manual_payment_keyboard",
+    "get_manual_admin_keyboard",
+    "get_instructions_menu_keyboard",
+]
