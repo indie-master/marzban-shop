@@ -17,7 +17,6 @@ from keyboards import (
     get_manual_admin_keyboard,
     get_buy_menu_keyboard,
     get_main_menu_keyboard,
-    get_instructions_menu_keyboard,
 )
 
 from db.methods import (
@@ -28,7 +27,6 @@ from db.methods import (
     get_manual_payment,
     get_manual_payment_links,
     update_manual_payment,
-    had_test_sub,
 )
 from services.user_links import ensure_user_link
 from utils import goods, yookassa, cryptomus, get_i18n_string
@@ -130,7 +128,7 @@ async def callback_payment_method_select(callback: CallbackQuery, state: FSMCont
         _("To be paid - {amount}₽ ⬇️").format(
             amount=int(float(result['amount']))
         ),
-        reply_markup=get_pay_keyboard(result['url'], data))
+        reply_markup=get_pay_keyboard(result['url']))
     await callback.answer()
 
 
@@ -164,7 +162,7 @@ async def callback_payment_method_select(callback: CallbackQuery, state: FSMCont
         prices=prices,
         provider_token="",
         payload=data,
-        reply_markup=get_xtr_pay_keyboard(price, data)
+        reply_markup=get_xtr_pay_keyboard(price)
     )
     await callback.answer()
 
@@ -203,7 +201,7 @@ async def callback_payment_method_select(callback: CallbackQuery, state: FSMCont
             amount=result['amount'],
             date=expire_date
         ),
-        reply_markup=get_pay_keyboard(result['url'], data))
+        reply_markup=get_pay_keyboard(result['url']))
     await callback.answer()
 
 
@@ -238,7 +236,7 @@ async def callback_payment_manual(callback: CallbackQuery, state: FSMContext):
     logging.info("Manual payment %s created for user %s", payment_id, callback.from_user.id)
     await callback.message.answer(
         _("To pay, use one of the links below. After payment, press «I have paid»."),
-        reply_markup=get_manual_payment_keyboard(payment_id, data),
+        reply_markup=get_manual_payment_keyboard(payment_id),
     )
     await callback.answer()
 
@@ -261,60 +259,6 @@ async def callback_manual_paid(callback: CallbackQuery, state: FSMContext):
     await state.set_state(ManualPaymentStates.waiting_for_proof)
     await state.update_data(payment_id=payment_id)
     await callback.message.answer(_("Please send a screenshot or receipt of your payment in reply to this message."))
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("back_pay_"))
-async def callback_back_from_pay(callback: CallbackQuery):
-    cb = callback.data.replace("back_pay_", "")
-    if cb not in goods.get_callbacks():
-        await callback.answer()
-        return
-
-    good = goods.get(cb)
-    text = _("Select payment method ⬇️")
-
-    try:
-        await callback.message.edit_text(text=text, reply_markup=get_payment_keyboard(good))
-    except Exception:
-        try:
-            await callback.message.delete()
-        except Exception:
-            pass
-        await callback.message.answer(text=text, reply_markup=get_payment_keyboard(good))
-
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("back_manual_"))
-async def callback_back_from_manual(callback: CallbackQuery):
-    payment_raw = callback.data.replace("back_manual_", "")
-    try:
-        payment_id = int(payment_raw)
-    except ValueError:
-        await callback.answer()
-        return
-
-    payment = await get_manual_payment(payment_id)
-    if payment is None:
-        await callback.answer()
-        return
-
-    good = goods.get(payment.callback)
-    if not good:
-        await callback.answer()
-        return
-
-    text = _("Select payment method ⬇️")
-    try:
-        await callback.message.edit_text(text=text, reply_markup=get_payment_keyboard(good))
-    except Exception:
-        try:
-            await callback.message.delete()
-        except Exception:
-            pass
-        await callback.message.answer(text=text, reply_markup=get_payment_keyboard(good))
-
     await callback.answer()
 
 
@@ -530,110 +474,6 @@ async def callback_manual_reject(callback: CallbackQuery):
         reply_markup=reply_markup,
     )
     await callback.answer(_("Payment rejected."), show_alert=True)
-
-
-async def _send_instructions(callback: CallbackQuery, text: str):
-    try:
-        await callback.message.edit_text(text=text, reply_markup=get_instructions_menu_keyboard())
-    except Exception:
-        try:
-            await callback.message.delete()
-        except Exception:
-            pass
-        await callback.message.answer(text, reply_markup=get_instructions_menu_keyboard())
-    await callback.answer()
-
-
-@router.callback_query(F.data == "instr_ios")
-async def instructions_ios(callback: CallbackQuery):
-    text = _(
-        "iOS setup:\n"
-        "1. Install the Happ app from App Store.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Tap \"Add server\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for iOS:\n"
-        "- App Store: {ios_link}"
-    ).format(
-        ios_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
-    )
-    await _send_instructions(callback, text)
-
-
-@router.callback_query(F.data == "instr_macos")
-async def instructions_macos(callback: CallbackQuery):
-    text = _(
-        "macOS setup:\n"
-        "1. Install the Happ app from the App Store.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for macOS:\n"
-        "- App Store: {mac_link}"
-    ).format(
-        mac_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
-    )
-    await _send_instructions(callback, text)
-
-
-@router.callback_query(F.data == "instr_android")
-async def instructions_android(callback: CallbackQuery):
-    text = _(
-        "Android setup:\n"
-        "1. Install the Happ app from Google Play or APK.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Tap \"Add server\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for Android:\n"
-        "- Google Play: {play}\n"
-        "- APK (GitHub): {apk}"
-    ).format(
-        play="https://play.google.com/store/apps/details?id=com.happproxy",
-        apk="https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk",
-    )
-    await _send_instructions(callback, text)
-
-
-@router.callback_query(F.data == "instr_windows")
-async def instructions_windows(callback: CallbackQuery):
-    text = _(
-        "Windows setup:\n"
-        "1. Download and install the app for Windows.\n"
-        "2. Launch Happ and wait for the interface to load.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Paste the key from the Telegram bot into the configuration field.\n"
-        "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site.\n\n"
-        "Download links for Windows:\n"
-        "- Installer: {win_link}"
-    ).format(
-        win_link="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x86.exe",
-    )
-    await _send_instructions(callback, text)
-
-
-@router.callback_query(F.data == "instr_linux")
-async def instructions_linux(callback: CallbackQuery):
-    text = _(
-        "Linux setup:\n"
-        "1. Download and install the app for your OS.\n"
-        "2. Launch Happ and wait for the interface to load.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Paste the key from the Telegram bot into the configuration field.\n"
-        "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site.\n\n"
-        "Download links for Linux:\n"
-        "- Packages: {linux_link}"
-    ).format(
-        linux_link="https://github.com/Happ-proxy/happ-desktop/releases/",
-    )
-    await _send_instructions(callback, text)
 
 
 @router.callback_query(lambda c: c.data in goods.get_callbacks())
