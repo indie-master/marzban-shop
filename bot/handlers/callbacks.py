@@ -486,6 +486,127 @@ async def callback_payment_method_select(callback: CallbackQuery, state: FSMCont
         primary_link = await ensure_user_link(callback.from_user)
         links = [primary_link] if primary_link else []
 
+@router.callback_query(F.data == "instr_ios")
+async def instructions_ios(callback: CallbackQuery):
+    text = _(
+        "iOS setup:\n"
+        "1. Install the Happ app from App Store.\n"
+        "2. Open the app and go to settings.\n"
+        "3. Tap \"Add server\" or the \"+\" icon.\n"
+        "4. Copy the key from the Telegram bot.\n"
+        "5. Paste the key into the app and tap \"Add\".\n"
+        "6. Enable VPN using the switch at the top.\n\n"
+        "Download links for iOS:\n"
+        "- App Store: {ios_link}"
+    ).format(
+        ios_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
+    )
+    await _send_instructions(callback, text)
+
+
+@router.callback_query(F.data == "instr_desktop")
+async def instructions_desktop(callback: CallbackQuery):
+    text = _(
+        "Desktop setup (Windows/macOS):\n"
+        "1. Download and install the Happ desktop app.\n"
+        "2. Open the app and go to settings.\n"
+        "3. Click \"Add configuration\" or the \"+\" icon.\n"
+        "4. Paste the key from the Telegram bot into the configuration field.\n"
+        "5. Save the configuration and connect.\n\n"
+        "Download links:\n"
+        "- Windows: {win_link}\n"
+        "- macOS: {mac_link}"
+    ).format(
+        win_link="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x86.exe",
+        mac_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
+    )
+    await _send_instructions(callback, text)
+
+
+@router.callback_query(F.data == "instr_macos")
+async def instructions_macos(callback: CallbackQuery):
+    text = _(
+        "macOS setup:\n"
+        "1. Install the Happ app from the App Store.\n"
+        "2. Open the app and go to settings.\n"
+        "3. Click \"Add configuration\" or the \"+\" icon.\n"
+        "4. Copy the key from the Telegram bot.\n"
+        "5. Paste the key into the app and tap \"Add\".\n"
+        "6. Enable VPN using the switch at the top.\n\n"
+        "Download links for macOS:\n"
+        "- App Store: {mac_link}"
+    ).format(
+        mac_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
+    )
+    await _send_instructions(callback, text)
+
+
+@router.callback_query(F.data == "instr_android")
+async def instructions_android(callback: CallbackQuery):
+    text = _(
+        "Android setup:\n"
+        "1. Install the Happ app from Google Play or APK.\n"
+        "2. Open the app and go to settings.\n"
+        "3. Tap \"Add server\" or the \"+\" icon.\n"
+        "4. Copy the key from the Telegram bot.\n"
+        "5. Paste the key into the app and tap \"Add\".\n"
+        "6. Enable VPN using the switch at the top.\n\n"
+        "Download links for Android:\n"
+        "- Google Play: {play}\n"
+        "- APK (GitHub): {apk}"
+    ).format(
+        play="https://play.google.com/store/apps/details?id=com.happproxy",
+        apk="https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk",
+    )
+    await _send_instructions(callback, text)
+
+
+@router.callback_query(F.data == "instr_windows")
+async def instructions_windows(callback: CallbackQuery):
+    text = _(
+        "Windows setup:\n"
+        "1. Download and install the app for Windows.\n"
+        "2. Launch Happ and wait for the interface to load.\n"
+        "3. Click \"Add configuration\" or the \"+\" icon.\n"
+        "4. Paste the key from the Telegram bot into the configuration field.\n"
+        "5. Click \"Save\" and then \"Connect\".\n"
+        "6. Done! Check the connection by opening any site.\n\n"
+        "Download links for Windows:\n"
+        "- Installer: {win_link}"
+    ).format(
+        win_link="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x86.exe",
+    )
+    await _send_instructions(callback, text)
+
+
+@router.callback_query(F.data == "instr_linux")
+async def instructions_linux(callback: CallbackQuery):
+    text = _(
+        "Linux setup:\n"
+        "1. Download and install the app for your OS.\n"
+        "2. Launch Happ and wait for the interface to load.\n"
+        "3. Click \"Add configuration\" or the \"+\" icon.\n"
+        "4. Paste the key from the Telegram bot into the configuration field.\n"
+        "5. Click \"Save\" and then \"Connect\".\n"
+        "6. Done! Check the connection by opening any site.\n\n"
+        "Download links for Linux:\n"
+        "- Packages: {linux_link}"
+    ).format(
+        linux_link="https://github.com/Happ-proxy/happ-desktop/releases/",
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data in goods.get_callbacks())
+async def callback_payment_method_select(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    good_id = callback.data
+
+    links = await get_links_by_tg_id(callback.from_user.id)
+    if not links:
+        primary_link = await ensure_user_link(callback.from_user)
+        links = [primary_link] if primary_link else []
+
     if len(links) <= 1:
         await state.update_data(
             selected_good=good_id,
@@ -558,6 +679,11 @@ async def callback_back_to_main(callback: CallbackQuery):
         pass
     await callback.message.answer(text, reply_markup=get_main_menu_keyboard(had_test_subscription))
     await callback.answer()
+
+
+@router.callback_query(F.data == "back_to_main")
+async def callback_back_to_main_alias(callback: CallbackQuery):
+    await callback_back_to_main(callback)
 
 
 def register_callbacks(dp: Dispatcher):
