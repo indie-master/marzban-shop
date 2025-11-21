@@ -66,10 +66,14 @@ async def get_subscriptions_for_tg(tg_id: int) -> list[UserSubscription]:
 
     subscriptions: list[UserSubscription] = []
     for link in links:
+        marzban_username = getattr(link, "marzban_user", None)
+        if not marzban_username:
+            logger.error("Invalid link object for tg %s: %s", tg_id, link)
+            continue
         try:
-            user = await marzban_api.panel.get_user(link.marzban_user)
+            user = await marzban_api.panel.get_user(marzban_username)
         except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to fetch Marzban user %s for tg %s: %s", link.marzban_user, tg_id, exc)
+            logger.error("Failed to fetch Marzban user %s for tg %s: %s", marzban_username, tg_id, exc)
             continue
 
         subscription_url = user.get('subscription_url') or None
@@ -81,7 +85,7 @@ async def get_subscriptions_for_tg(tg_id: int) -> list[UserSubscription]:
 
         subscriptions.append(
             UserSubscription(
-                username=user.get('username') or link.marzban_user,
+                username=user.get('username') or marzban_username,
                 status=user.get('status') or "unknown",
                 expire=user.get('expire'),
                 used_traffic=user.get('used_traffic'),

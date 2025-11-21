@@ -29,14 +29,16 @@ async def create_vpn_profile(tg_id: int):
 async def get_marzban_profile_db(tg_id: int) -> VPNUsers:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        result: VPNUsers = (await conn.execute(sql_query)).fetchone()
-    return result
+        result = await conn.execute(sql_query)
+        profile: VPNUsers | None = result.scalars().first()
+    return profile
 
 async def get_marzban_profile_by_vpn_id(vpn_id: str):
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
-        result: VPNUsers = (await conn.execute(sql_query)).fetchone()
-    return result
+        result = await conn.execute(sql_query)
+        profile: VPNUsers | None = result.scalars().first()
+    return profile
 
 
 async def get_primary_user_link(tg_id: int) -> UserLink | None:
@@ -98,8 +100,9 @@ async def get_all_linked_usernames() -> set[str]:
 async def had_test_sub(tg_id: int) -> bool:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        result: VPNUsers = (await conn.execute(sql_query)).fetchone()
-    return result.test
+        result = await conn.execute(sql_query)
+        profile: VPNUsers | None = result.scalars().first()
+    return bool(profile and profile.test)
 
 async def update_test_subscription_state(tg_id):
     async with engine.connect() as conn:
@@ -124,13 +127,15 @@ async def add_cryptomus_payment(tg_id: int, callback: str, chat_id: int, lang_co
 async def get_yookassa_payment(payment_id) -> YPayments:
     async with engine.connect() as conn:
         sql_q = select(YPayments).where(YPayments.payment_id == payment_id)
-        payment: YPayments = (await conn.execute(sql_q)).fetchone()
+        result = await conn.execute(sql_q)
+        payment: YPayments | None = result.scalars().first()
     return payment
 
 async def get_cryptomus_payment(order_id) -> CPayments:
     async with engine.connect() as conn:
         sql_q = select(CPayments).where(CPayments.order_id == order_id)
-        payment: CPayments = (await conn.execute(sql_q)).fetchone()
+        result = await conn.execute(sql_q)
+        payment: CPayments | None = result.scalars().first()
     return payment
 
 async def delete_payment(payment_id):
@@ -172,7 +177,8 @@ async def add_manual_payment(
 async def get_manual_payment(payment_id) -> ManualPayments:
     async with engine.connect() as conn:
         sql_q = select(ManualPayments).where(ManualPayments.id == payment_id)
-        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
+        result = await conn.execute(sql_q)
+        payment: ManualPayments | None = result.scalars().first()
     return payment
 
 
@@ -205,5 +211,6 @@ async def get_latest_manual_payment_by_status(tg_id: int, statuses: list[str]) -
             .where(ManualPayments.tg_id == tg_id, ManualPayments.status.in_(statuses))
             .order_by(desc(ManualPayments.id))
         )
-        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
+        result = await conn.execute(sql_q)
+        payment: ManualPayments | None = result.scalars().first()
     return payment

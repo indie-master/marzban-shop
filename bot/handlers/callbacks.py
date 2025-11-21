@@ -48,7 +48,11 @@ router = Router(name="callbacks-router")
 def _build_subscription_choice_keyboard(links) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for link in links:
-        builder.button(text=link.marzban_user, callback_data=f"select_sub:{link.marzban_user}")
+        marzban_username = getattr(link, "marzban_user", None)
+        if not marzban_username:
+            logging.error("Invalid link object received in subscription keyboard: %s", link)
+            continue
+        builder.button(text=marzban_username, callback_data=f"select_sub:{marzban_username}")
     builder.button(text=_("Продлить все"), callback_data="select_sub:all")
     builder.button(text=_("Отмена"), callback_data="select_sub:cancel")
     builder.adjust(1)
