@@ -16,8 +16,7 @@ def get_main_menu_keyboard(trial_expired:bool, lang=None) -> ReplyKeyboardMarkup
     ]
 
     kb_raw = [
-        KeyboardButton(text=get_i18n_str("Frequent questions ℹ️", lang)),
-        KeyboardButton(text=get_i18n_str("Instructions 📚", lang)),
+            KeyboardButton(text=get_i18n_str("Frequent questions ℹ️", lang))
     ]
 
     if trial_expired:
