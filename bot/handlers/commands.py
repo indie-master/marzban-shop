@@ -28,13 +28,13 @@ async def start(message: Message):
 
     text = _(
         "Welcome to Swiftless Service!\n\n"
-        "This is a Telegram bot for connecting to secure internet.   \n"
+        "This is a Telegram bot for connecting to secure internet.\n"
         "{trial_line}"
         "Our motto:\n"
-        "Safe\ud83d\udef1\ufe0f \n"
-        "Unlimited\u267e\ufe0f\n"
-        "Fast\ud83d\ude80\n\n"
-        "Yours\ud83e\udd1d\n\n"
+        "Safe\n"
+        "Unlimited\n"
+        "Fast\n\n"
+        "Yours\n\n"
         "Available locations:\n"
         "\ud83c\udde9\ud83c\uddea Germany\n"
         "\ud83c\uddf8\ud83c\uddf0 Slovakia\n"
