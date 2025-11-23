@@ -39,8 +39,8 @@ services:
             PROTOCOLS_CONFIG: ${PROTOCOLS_CONFIG}
             EXPIRED_NOTIFICATION_TIME: ${EXPIRED_NOTIFICATION_TIME}
         volumes:
-            - "./goods.json:/app/goods.json"
-            - "./protocols.json:/app/protocols.json"
+            - "./goods.json:/app/goods.json:ro"
+            - "./protocols.json:/app/protocols.json:ro"
             - "./locales:/app/locales"
         depends_on:
             db:
