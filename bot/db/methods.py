@@ -13,33 +13,39 @@ async def create_vpn_profile(tg_id: int):
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        existing: VPNUsers | None = result.scalar_one_or_none()
-        if existing is not None:
+        row = result.fetchone()
+        # row[0] — это сам объект VPNUsers
+        if row is not None:
             return
 
-        hash_ = hashlib.md5(str(tg_id).encode()).hexdigest()
-        await conn.execute(
-            insert(VPNUsers).values(tg_id=tg_id, vpn_id=hash_)
-        )
+        hash = hashlib.md5(str(tg_id).encode()).hexdigest()
+        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=hash)
+        await conn.execute(sql_query)
         await conn.commit()
+
 
 async def get_marzban_profile_db(tg_id: int) -> VPNUsers | None:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        return result.scalar_one_or_none()
+        row = result.fetchone()
+        return row[0] if row is not None else None
+
 
 async def get_marzban_profile_by_vpn_id(vpn_id: str) -> VPNUsers | None:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
         result = await conn.execute(sql_query)
-        return result.scalar_one_or_none()
+        row = result.fetchone()
+        return row[0] if row is not None else None
+
 
 async def had_test_sub(tg_id: int) -> bool:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        user: VPNUsers | None = result.scalar_one_or_none()
+        row = result.fetchone()
+        user: VPNUsers | None = row[0] if row is not None else None
     return bool(user.test) if user is not None else False
 
 async def update_test_subscription_state(tg_id: int):
