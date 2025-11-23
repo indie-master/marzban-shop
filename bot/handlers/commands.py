@@ -8,6 +8,7 @@ from aiogram.utils.i18n import lazy_gettext as __
 from keyboards import get_main_menu_keyboard
 import glv
 from db.methods import had_test_sub
+from utils.images import send_section_image
 
 router = Router(name="commands-router") 
 
@@ -15,11 +16,31 @@ router = Router(name="commands-router")
     Command("start")
 )
 async def start(message: Message):
-    text = _("Hello, {name} 👋🏻\n\nSelect an action ⬇️").format(
-        name=message.from_user.first_name,
-        title=glv.config.get('SHOP_NAME', 'VPN Shop')
-    )
     had_test_subscription = await had_test_sub(message.from_user.id)
+
+    await send_section_image(message, "START_IMAGE_ENABLED", "START_IMAGE_PATH")
+
+    trial_line = ""
+    if glv.config.get('TEST_PERIOD') and not had_test_subscription:
+        trial_line = _("You have access to a free period - {days} days.\n\n").format(
+            days=glv.config.get('TEST_PERIOD_DAYS', 0)
+        )
+
+    text = _(
+        "Welcome to Swiftless Service!\n\n"
+        "This is a Telegram bot for connecting to secure internet.   \n"
+        "{trial_line}"
+        "Our motto:\n"
+        "Safe\ud83d\udef1\ufe0f \n"
+        "Unlimited\u267e\ufe0f\n"
+        "Fast\ud83d\ude80\n\n"
+        "Yours\ud83e\udd1d\n\n"
+        "Available locations:\n"
+        "\ud83c\udde9\ud83c\uddea Germany\n"
+        "\ud83c\uddf8\ud83c\uddf0 Slovakia\n"
+        "\ud83c\uddf8\ud83c\uddea Sweden\n\n"
+        "And we also have YouTube without ads!"
+    ).format(trial_line=trial_line)
     await message.answer(text, reply_markup=get_main_menu_keyboard(had_test_subscription))
 
 def register_commands(dp: Dispatcher):

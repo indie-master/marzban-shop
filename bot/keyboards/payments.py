@@ -9,35 +9,51 @@ def get_payment_keyboard(good) -> InlineKeyboardMarkup:
     yoo = glv.config['YOOKASSA_SHOPID'] and glv.config['YOOKASSA_TOKEN']
     crypt = glv.config['MERCHANT_UUID'] and glv.config['CRYPTO_TOKEN']
     stars = glv.config['STARS_PAYMENT_ENABLED']
-    f = yoo or crypt
+    manual = glv.config.get('PAY_SBER_URL') or glv.config.get('PAY_TBANK_URL')
+    f = yoo or crypt or manual or stars
     if not f:
         builder.row(
             InlineKeyboardButton(
                 text="Oh no...",
-                callback_data=f"none"
+                callback_data="none",
             )
         )
-        return builder.as_markup()
-    if yoo:
-        builder.row(
-            InlineKeyboardButton(
-                text=_("YooKassa - ₽"),
-                callback_data=f"pay_kassa_{good['callback']}"
+    else:
+        if yoo:
+            builder.row(
+                InlineKeyboardButton(
+                    text=_("YooKassa - ₽"),
+                    callback_data=f"pay_kassa_{good['callback']}"
+                )
             )
-        )
-    if crypt:
-        builder.row(
-            InlineKeyboardButton(
-                text=f"Cryptomus - $",
-                callback_data=f"pay_crypto_{good['callback']}"
+        if crypt:
+            builder.row(
+                InlineKeyboardButton(
+                    text="Cryptomus - $",
+                    callback_data=f"pay_crypto_{good['callback']}"
+                )
             )
-        )
-   
-    if stars:
-        builder.row(
-            InlineKeyboardButton(
-                text=f"Telegram Stars - ⭐️",
-                callback_data=f"pay_stars_{good['callback']}"
+
+        if stars:
+            builder.row(
+                InlineKeyboardButton(
+                    text="Telegram Stars - ⭐️",
+                    callback_data=f"pay_stars_{good['callback']}"
+                )
             )
+
+        if manual:
+            builder.row(
+                InlineKeyboardButton(
+                    text=_("Card transfer"),
+                    callback_data=f"pay_manual_{good['callback']}"
+                )
+            )
+
+    builder.row(
+        InlineKeyboardButton(
+            text=_("⬅️ Назад"),
+            callback_data="back:buy_menu",
         )
+    )
     return builder.as_markup()
