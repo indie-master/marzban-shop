@@ -43,11 +43,11 @@ msgid "Choose the appropriate tariff ⬇️"
 msgstr ""
 
 #: bot/handlers/messages.py:38
-msgid "Your profile is not active at the moment.\n\nYou can choose \"{trial}\" or \"Join\"."
+msgid "Your profile is not active at the moment.\n\nYou can choose \"{trial}\" or \"Join 🏄🏻‍♂️\"."
 msgstr ""
 
 #: bot/handlers/messages.py:42
-msgid "Your profile is not active at the moment.\n\nYou can choose \"Join\"."
+msgid "Your profile is not active at the moment.\n\nYou can choose \"Join 🏄🏻‍♂️\"."
 msgstr ""
 
 #: bot/handlers/messages.py:41
@@ -82,8 +82,8 @@ msgstr "⬅️ Back"
 msgid "You have access to a free period - {days} days.\n\n"
 msgstr "You have access to a free period - {days} days.\n\n"
 
-msgid "Welcome to Swiftless Service!\n\nThis is a Telegram bot for connecting to secure internet.   \n{trial_line}Our motto:\nSafe🛟 \nUnlimited♾️\nFast🚀\n\nYours🤝\n\nAvailable locations:\n Germany\n Slovakia\n Sweden\n\nAnd we also have YouTube without ads!"
-msgstr "Welcome to Swiftless Service!\n\nThis is a Telegram bot for connecting to secure internet.   \n{trial_line}Our motto:\nSafe🛟 \nUnlimited♾️\nFast🚀\n\nYours🤝\n\nAvailable locations:\n Germany\n Slovakia\n Sweden\n\nAnd we also have YouTube without ads!"
+msgid "Welcome to Swiftless Service!\n\nThis bot helps you connect to secure and fast internet.\n\n{trial_line}Our principles:\n— Safe\n— Unlimited\n— Fast\n\nAvailable locations:\n- Germany\n- Slovakia\n- Sweden\n\nWe also have YouTube without ads."
+msgstr "Welcome to Swiftless Service!\n\nThis bot helps you connect to secure and fast internet.\n\n{trial_line}Our principles:\n— Safe\n— Unlimited\n— Fast\n\nAvailable locations:\n- Germany\n- Slovakia\n- Sweden\n\nWe also have YouTube without ads."
 
 msgid "Remaining traffic: ♾️"
 msgstr "Remaining traffic: ♾️"

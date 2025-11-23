@@ -50,12 +50,12 @@ msgid "Choose the appropriate tariff ⬇️"
 msgstr "Выберите подходящий тариф ⬇️"
 
 #: bot/handlers/messages.py:38
-msgid "Your profile is not active at the moment.\n\nYou can choose \"{trial}\" or \"Join\"."
-msgstr "Ваш профиль не активен в данный момент.\n\nВы можете выбрать \"{trial}\" или \"Присоединиться\"."
+msgid "Your profile is not active at the moment.\n\nYou can choose \"{trial}\" or \"Join 🏄🏻‍♂️\"."
+msgstr "Ваш профиль не активен в данный момент.\n\nВы можете выбрать \"{trial}\" или \"Присоединиться 🏄🏻‍♂️\"."
 
 #: bot/handlers/messages.py:42
-msgid "Your profile is not active at the moment.\n\nYou can choose \"Join\"."
-msgstr "Ваш профиль не активен в данный момент.\n\nВы можете выбрать \"Присоединиться\"."
+msgid "Your profile is not active at the moment.\n\nYou can choose \"Join 🏄🏻‍♂️\"."
+msgstr "Ваш профиль не активен в данный момент.\n\nВы можете выбрать \"Присоединиться 🏄🏻‍♂️\"."
 
 #: bot/handlers/messages.py:41
 msgid "Subscription page ⬇️"
@@ -94,8 +94,8 @@ msgstr "⬅️ Назад"
 msgid "You have access to a free period - {days} days.\n\n"
 msgstr "Вам доступен бесплатный период - {days} дней.\n\n"
 
-msgid "Welcome to Swiftless Service!\n\nThis is a Telegram bot for connecting to secure internet.   \n{trial_line}Our motto:\nSafe🛟 \nUnlimited♾️\nFast🚀\n\nYours🤝\n\nAvailable locations:\n Germany\n Slovakia\n Sweden\n\nAnd we also have YouTube without ads!"
-msgstr "Добро пожаловать в Swiftless Service!\n\nЭто Telegram-бот для подключения к безопасному интернету.   \n{trial_line}Наш лозунг:\nБезопасный🛟 \nБезлимитный♾️\nБыстрый🚀\n\nТвой🫵\n\nДоступные локации:\n Германия\n Словакия\n Швеция\n\nА еще у нас Youtube без рекламы!"
+msgid "Welcome to Swiftless Service!\n\nThis bot helps you connect to secure and fast internet.\n\n{trial_line}Our principles:\n— Safe\n— Unlimited\n— Fast\n\nAvailable locations:\n- Germany\n- Slovakia\n- Sweden\n\nWe also have YouTube without ads."
+msgstr "Добро пожаловать в Swiftless Service!\n\nЭтот бот помогает подключиться к безопасному и быстрому интернету.\n\n{trial_line}Наши принципы:\n— Безопасно\n— Безлимитно\n— Быстро\n\nДоступные локации:\n- Германия\n- Словакия\n- Швеция\n\nТакже у нас есть YouTube без рекламы."
 
 msgid "Remaining traffic: ♾️"
 msgstr "Остаток трафика: ♾️"

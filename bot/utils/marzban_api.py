@@ -119,11 +119,14 @@ async def check_if_user_exists(name: str) -> bool:
         return False
 
 async def get_marzban_profile(tg_id: int):
-    result = await get_marzban_profile_db(tg_id)
-    res = await check_if_user_exists(result.vpn_id)
+    db_user = await get_marzban_profile_db(tg_id)
+    if db_user is None:
+        return None
+
+    res = await check_if_user_exists(db_user.vpn_id)
     if not res:
         return None
-    return await panel.get_user(result.vpn_id)
+    return await panel.get_user(db_user.vpn_id)
 
 async def generate_test_subscription(username: str):
     res = await check_if_user_exists(username)

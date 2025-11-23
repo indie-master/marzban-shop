@@ -11,11 +11,9 @@ engine = create_async_engine(glv.config["DB_URL"])
 
 async def create_vpn_profile(tg_id: int):
     async with engine.connect() as conn:
-        # Проверяем, есть ли уже профиль
-        result = await conn.execute(
-            select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        )
-        existing = result.scalars().first()
+        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
+        result = await conn.execute(sql_query)
+        existing: VPNUsers | None = result.scalar_one_or_none()
         if existing is not None:
             return
 
@@ -25,35 +23,24 @@ async def create_vpn_profile(tg_id: int):
         )
         await conn.commit()
 
-
 async def get_marzban_profile_db(tg_id: int) -> VPNUsers | None:
     async with engine.connect() as conn:
-        result = await conn.execute(
-            select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        )
-        user = result.scalars().first()
-    return user
-
+        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
+        result = await conn.execute(sql_query)
+        return result.scalar_one_or_none()
 
 async def get_marzban_profile_by_vpn_id(vpn_id: str) -> VPNUsers | None:
     async with engine.connect() as conn:
-        result = await conn.execute(
-            select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
-        )
-        user = result.scalars().first()
-    return user
-
+        sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
+        result = await conn.execute(sql_query)
+        return result.scalar_one_or_none()
 
 async def had_test_sub(tg_id: int) -> bool:
     async with engine.connect() as conn:
-        # Берем только поле test
-        result = await conn.execute(
-            select(VPNUsers.test).where(VPNUsers.tg_id == tg_id)
-        )
-        value = result.scalar_one_or_none()
-    # None → False, 0 → False, 1 → True
-    return bool(value) if value is not None else False
-
+        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
+        result = await conn.execute(sql_query)
+        user: VPNUsers | None = result.scalar_one_or_none()
+    return bool(user.test) if user is not None else False
 
 async def update_test_subscription_state(tg_id: int):
     async with engine.connect() as conn:
@@ -148,37 +135,26 @@ async def add_manual_payment(
         return result.inserted_primary_key[0]
 
 
-async def get_manual_payment(payment_id) -> ManualPayments | None:
+async def get_manual_payment(payment_id) -> ManualPayments:
     async with engine.connect() as conn:
         sql_q = select(ManualPayments).where(ManualPayments.id == payment_id)
-        result = await conn.execute(sql_q)
-        payment: ManualPayments = result.scalars().first()
+        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
     return payment
 
 
 async def update_manual_payment(payment_id, **kwargs):
     async with engine.connect() as conn:
-        sql_q = (
-            update(ManualPayments)
-            .where(ManualPayments.id == payment_id)
-            .values(**kwargs)
-        )
+        sql_q = update(ManualPayments).where(ManualPayments.id == payment_id).values(**kwargs)
         await conn.execute(sql_q)
         await conn.commit()
 
 
-async def get_latest_manual_payment_by_status(
-    tg_id: int, statuses: list[str]
-) -> ManualPayments | None:
+async def get_latest_manual_payment_by_status(tg_id: int, statuses: list[str]) -> ManualPayments | None:
     async with engine.connect() as conn:
         sql_q = (
             select(ManualPayments)
-            .where(
-                ManualPayments.tg_id == tg_id,
-                ManualPayments.status.in_(statuses),
-            )
+            .where(ManualPayments.tg_id == tg_id, ManualPayments.status.in_(statuses))
             .order_by(desc(ManualPayments.id))
         )
-        result = await conn.execute(sql_q)
-        payment: ManualPayments = result.scalars().first()
+        payment: ManualPayments = (await conn.execute(sql_q)).fetchone()
     return payment
