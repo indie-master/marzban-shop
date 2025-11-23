@@ -46,6 +46,9 @@ The repository ships `.env.example` with placeholders; copy it to `.env` during 
 - Database: `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_ROOT_PASS`, `DB_ADDRESS`, `DB_PORT`
 - Webhook: `WEBHOOK_URL` (without `/webhook`, e.g., `https://bot.example.com`), `WEBHOOK_PORT`
 - Notifications: `RENEW_NOTIFICATION_TIME`, `EXPIRED_NOTIFICATION_TIME`
+- FAQ links: `FAQ_PRIVACY_URL`/`FAQ_PRIVACY_ENABLED`, `FAQ_TERMS_URL`/`FAQ_TERMS_ENABLED`, `FAQ_RULES_URL`/`FAQ_RULES_ENABLED`, `FAQ_OFFER_URL`/`FAQ_OFFER_ENABLED`
+- Happ download buttons: `HAPP_IOS_URL`, `HAPP_ANDROID_PLAY_URL`, `HAPP_ANDROID_APK_URL`, `HAPP_WINDOWS_URL`, `HAPP_LINUX_URL`
+- Optional section images: `START_IMAGE_ENABLED`/`START_IMAGE_PATH`, `SUBSCRIPTION_IMAGE_ENABLED`/`SUBSCRIPTION_IMAGE_PATH`, `INSTRUCTIONS_IMAGE_ENABLED`/`INSTRUCTIONS_IMAGE_PATH`, `FAQ_IMAGE_ENABLED`/`FAQ_IMAGE_PATH`, `SUPPORT_IMAGE_ENABLED`/`SUPPORT_IMAGE_PATH`
 
 Edit the file manually or with `mshop edit .env` after installation. Keep your real `.env` out of git.
 
@@ -62,6 +65,14 @@ Edit the file manually or with `mshop edit .env` after installation. Keep your r
    ```bash
    curl -I https://your-domain/webhook
    ```
+
+### Bot screens and navigation
+- **Greeting (`/start`)** shows the welcome text with motto, available locations, and the free-trial line when trials are enabled and unused (`TEST_PERIOD`/`TEST_PERIOD_DAYS`).
+- **My subscription** displays status (active/inactive), days left, expiry date (`dd.mm.yyyy`), remaining traffic (or ♾️), and a copy-friendly subscription URL; the existing WebApp button still opens the subscription.
+- **Instructions** menu offers OS options: 🍏 iOS / MacOS, 🤖 Android, 🖥️ Windows, 👨🏻‍💻 Linux. Each platform shows setup steps with download buttons sourced from `HAPP_*` variables and a back button to the OS list.
+- **FAQ** presents inline links (privacy, terms, rules, offer) controlled by `FAQ_*_ENABLED` and `FAQ_*_URL` pairs.
+- **Support** includes a “Write to support” button using `SUPPORT_LINK` plus a back button.
+- Optional photos can precede key sections via `*_IMAGE_ENABLED` + `*_IMAGE_PATH` pairs for start, subscription, instructions, FAQ, and support (paths may be local files or HTTP/HTTPS URLs).
 
 ### Goods configuration (`goods.json`)
 `goods.example.json` holds a sample tariff set; copy it to `goods.json` during installation or later. The real `goods.json` is not tracked in git. A minimal example:

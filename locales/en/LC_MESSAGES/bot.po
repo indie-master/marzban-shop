@@ -43,10 +43,11 @@ msgid "Choose the appropriate tariff ⬇️"
 msgstr ""
 
 #: bot/handlers/messages.py:38
-msgid ""
-"Your profile is not active at the moment.\n️"
-"\n"
-"You can choose \"5 days free 🆓\" or \"Join 🏄🏻‍♂️\"."
+msgid "Your profile is not active at the moment.\n\nYou can choose \"{trial}\" or \"Join \ud83c\udfc4\ud83c\udffb\u200d\u2640\ufe0f\"."
+msgstr ""
+
+#: bot/handlers/messages.py:42
+msgid "Your profile is not active at the moment.\n\nYou can choose \"Join \ud83c\udfc4\ud83c\udffb\u200d\u2640\ufe0f\"."
 msgstr ""
 
 #: bot/handlers/messages.py:41
@@ -77,6 +78,72 @@ msgstr ""
 #: bot/keyboards/back.py:9 bot/keyboards/buy_menu.py:18 bot/keyboards/payments.py:43 bot/keyboards/subscription.py:17
 msgid "⬅️ Назад"
 msgstr "⬅️ Back"
+
+msgid "You have access to a free period - {days} days.\n\n"
+msgstr "You have access to a free period - {days} days.\n\n"
+
+msgid "Welcome to Swiftless Service!\n\nThis is a Telegram bot for connecting to secure internet.   \n{trial_line}Our motto:\nSafe🛟 \nUnlimited♾️\nFast🚀\n\nYours🤝\n\nAvailable locations:\n🇩🇪 Germany\n🇸🇰 Slovakia\n🇸🇪 Sweden\n\nAnd we also have YouTube without ads!"
+msgstr "Welcome to Swiftless Service!\n\nThis is a Telegram bot for connecting to secure internet.   \n{trial_line}Our motto:\nSafe🛟 \nUnlimited♾️\nFast🚀\n\nYours🤝\n\nAvailable locations:\n🇩🇪 Germany\n🇸🇰 Slovakia\n🇸🇪 Sweden\n\nAnd we also have YouTube without ads!"
+
+msgid "Remaining traffic: ♾️"
+msgstr "Remaining traffic: ♾️"
+
+msgid "Remaining traffic: {gb} GB"
+msgstr "Remaining traffic: {gb} GB"
+
+msgid "Access: 🟢 Active"
+msgstr "Access: 🟢 Active"
+
+msgid "Access: 🔴 Not active"
+msgstr "Access: 🔴 Not active"
+
+msgid "{status}\nDays left: {days}\nActive until: {date}\n{traffic}\n\nSubscription link:\n<code>{sub_url}</code>\n\nTo open the subscription in the app — tap the \"Open\" button."
+msgstr "{status}\nDays left: {days}\nActive until: {date}\n{traffic}\n\nSubscription link:\n<code>{sub_url}</code>\n\nTo open the subscription in the app — tap the \"Open\" button."
+
+msgid "Select a document ⬇️"
+msgstr "Select a document ⬇️"
+
+msgid "Privacy policy"
+msgstr "Privacy policy"
+
+msgid "User agreement"
+msgstr "User agreement"
+
+msgid "Rules"
+msgstr "Rules"
+
+msgid "Offer"
+msgstr "Offer"
+
+msgid "✍️ Write to support"
+msgstr "✍️ Write to support"
+
+msgid "iOS / macOS setup:\n1. Install the Happ app from App Store.\n2. Open the app and go to settings.\n3. Tap \"Add server\" or the \"+\" icon.\n4. Copy the key from the Telegram bot.\n5. Paste the key into the app and tap \"Add\".\n6. Enable VPN using the switch at the top."
+msgstr "iOS / macOS setup:\n1. Install the Happ app from App Store.\n2. Open the app and go to settings.\n3. Tap \"Add server\" or the \"+\" icon.\n4. Copy the key from the Telegram bot.\n5. Paste the key into the app and tap \"Add\".\n6. Enable VPN using the switch at the top."
+
+msgid "Android setup:\n1. Install the Happ app from Google Play or APK.\n2. Open the app and go to settings.\n3. Tap \"Add server\" or the \"+\" icon.\n4. Copy the key from the Telegram bot.\n5. Paste the key into the app and tap \"Add\".\n6. Enable VPN using the switch at the top."
+msgstr "Android setup:\n1. Install the Happ app from Google Play or APK.\n2. Open the app and go to settings.\n3. Tap \"Add server\" or the \"+\" icon.\n4. Copy the key from the Telegram bot.\n5. Paste the key into the app and tap \"Add\".\n6. Enable VPN using the switch at the top."
+
+msgid "Windows setup:\n1. Download and install the app for Windows.\n2. Launch Happ and wait for the interface to load.\n3. Click \"Add configuration\" or the \"+\" icon.\n4. Paste the key from the Telegram bot into the configuration field.\n5. Click \"Save\" and then \"Connect\".\n6. Done! Check the connection by opening any site."
+msgstr "Windows setup:\n1. Download and install the app for Windows.\n2. Launch Happ and wait for the interface to load.\n3. Click \"Add configuration\" or the \"+\" icon.\n4. Paste the key from the Telegram bot into the configuration field.\n5. Click \"Save\" and then \"Connect\".\n6. Done! Check the connection by opening any site."
+
+msgid "Linux setup:\n1. Download and install the app for your OS.\n2. Launch Happ and wait for the interface to load.\n3. Click \"Add configuration\" or the \"+\" icon.\n4. Paste the key from the Telegram bot into the configuration field.\n5. Click \"Save\" and then \"Connect\".\n6. Done! Check the connection by opening any site."
+msgstr "Linux setup:\n1. Download and install the app for your OS.\n2. Launch Happ and wait for the interface to load.\n3. Click \"Add configuration\" or the \"+\" icon.\n4. Paste the key from the Telegram bot into the configuration field.\n5. Click \"Save\" and then \"Connect\".\n6. Done! Check the connection by opening any site."
+
+msgid "Happ (iOS/MacOS)"
+msgstr "Happ (iOS/MacOS)"
+
+msgid "Happ (Google Play)"
+msgstr "Happ (Google Play)"
+
+msgid "Happ (APK)"
+msgstr "Happ (APK)"
+
+msgid "Happ (Windows)"
+msgstr "Happ (Windows)"
+
+msgid "Happ (Linux)"
+msgstr "Happ (Linux)"
 
 #: bot/keyboards/buy_menu.py:11
 msgid "{title} - {price_ru}₽"

@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Dispatcher
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, LabeledPrice, Message
+from aiogram.types import CallbackQuery, LabeledPrice, Message, InlineKeyboardButton
 from aiogram.utils.i18n import gettext as _
 
 import logging
 
+from .commands import start
 from keyboards import (
     get_payment_keyboard,
     get_pay_keyboard,
@@ -17,6 +18,7 @@ from keyboards import (
     get_buy_menu_keyboard,
     get_main_menu_keyboard,
     get_instructions_menu_keyboard,
+    get_instruction_detail_keyboard,
 )
 
 from db.methods import (
@@ -392,52 +394,47 @@ async def callback_manual_reject(callback: CallbackQuery):
     await callback.answer(_("Payment rejected."), show_alert=True)
 
 
-async def _send_instructions(callback: CallbackQuery, text: str):
+async def _send_instructions(callback: CallbackQuery, text: str, keyboard=None):
+    if keyboard is None:
+        keyboard = get_instructions_menu_keyboard()
     try:
-        await callback.message.edit_text(text=text, reply_markup=get_instructions_menu_keyboard())
+        await callback.message.edit_text(text=text, reply_markup=keyboard)
     except Exception:
         try:
             await callback.message.delete()
         except Exception:
             pass
-        await callback.message.answer(text, reply_markup=get_instructions_menu_keyboard())
+        await callback.message.answer(text, reply_markup=keyboard)
     await callback.answer()
 
 
-@router.callback_query(F.data == "instr_ios")
+@router.callback_query(F.data == "back:instructions")
+async def instructions_back(callback: CallbackQuery):
+    await _send_instructions(callback, _("Choose your platform ⬇️"))
+
+
+@router.callback_query(F.data == "instr_apple")
 async def instructions_ios(callback: CallbackQuery):
     text = _(
-        "iOS setup:\n"
+        "iOS / macOS setup:\n"
         "1. Install the Happ app from App Store.\n"
         "2. Open the app and go to settings.\n"
         "3. Tap \"Add server\" or the \"+\" icon.\n"
         "4. Copy the key from the Telegram bot.\n"
         "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for iOS:\n"
-        "- App Store: {ios_link}"
-    ).format(
-        ios_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
+        "6. Enable VPN using the switch at the top."
     )
-    await _send_instructions(callback, text)
-
-
-@router.callback_query(F.data == "instr_macos")
-async def instructions_macos(callback: CallbackQuery):
-    text = _(
-        "macOS setup:\n"
-        "1. Install the Happ app from the App Store.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for macOS:\n"
-        "- App Store: {mac_link}"
-    ).format(
-        mac_link="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
-    )
-    await _send_instructions(callback, text)
+    buttons = []
+    apple_url = glv.config.get('HAPP_IOS_URL')
+    if apple_url:
+        buttons.append(
+            InlineKeyboardButton(
+                text=_("Happ (iOS/MacOS)"),
+                url=apple_url,
+            )
+        )
+    keyboard = get_instruction_detail_keyboard(buttons)
+    await _send_instructions(callback, text, keyboard)
 
 
 @router.callback_query(F.data == "instr_android")
@@ -449,15 +446,17 @@ async def instructions_android(callback: CallbackQuery):
         "3. Tap \"Add server\" or the \"+\" icon.\n"
         "4. Copy the key from the Telegram bot.\n"
         "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top.\n\n"
-        "Download links for Android:\n"
-        "- Google Play: {play}\n"
-        "- APK (GitHub): {apk}"
-    ).format(
-        play="https://play.google.com/store/apps/details?id=com.happproxy",
-        apk="https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk",
+        "6. Enable VPN using the switch at the top."
     )
-    await _send_instructions(callback, text)
+    buttons = []
+    android_play = glv.config.get('HAPP_ANDROID_PLAY_URL')
+    android_apk = glv.config.get('HAPP_ANDROID_APK_URL')
+    if android_play:
+        buttons.append(InlineKeyboardButton(text=_("Happ (Google Play)"), url=android_play))
+    if android_apk:
+        buttons.append(InlineKeyboardButton(text=_("Happ (APK)"), url=android_apk))
+    keyboard = get_instruction_detail_keyboard(buttons)
+    await _send_instructions(callback, text, keyboard)
 
 
 @router.callback_query(F.data == "instr_windows")
@@ -469,13 +468,14 @@ async def instructions_windows(callback: CallbackQuery):
         "3. Click \"Add configuration\" or the \"+\" icon.\n"
         "4. Paste the key from the Telegram bot into the configuration field.\n"
         "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site.\n\n"
-        "Download links for Windows:\n"
-        "- Installer: {win_link}"
-    ).format(
-        win_link="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x86.exe",
+        "6. Done! Check the connection by opening any site."
     )
-    await _send_instructions(callback, text)
+    buttons = []
+    win_url = glv.config.get('HAPP_WINDOWS_URL')
+    if win_url:
+        buttons.append(InlineKeyboardButton(text=_("Happ (Windows)"), url=win_url))
+    keyboard = get_instruction_detail_keyboard(buttons)
+    await _send_instructions(callback, text, keyboard)
 
 
 @router.callback_query(F.data == "instr_linux")
@@ -487,13 +487,14 @@ async def instructions_linux(callback: CallbackQuery):
         "3. Click \"Add configuration\" or the \"+\" icon.\n"
         "4. Paste the key from the Telegram bot into the configuration field.\n"
         "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site.\n\n"
-        "Download links for Linux:\n"
-        "- Packages: {linux_link}"
-    ).format(
-        linux_link="https://github.com/Happ-proxy/happ-desktop/releases/",
+        "6. Done! Check the connection by opening any site."
     )
-    await _send_instructions(callback, text)
+    buttons = []
+    linux_url = glv.config.get('HAPP_LINUX_URL')
+    if linux_url:
+        buttons.append(InlineKeyboardButton(text=_("Happ (Linux)"), url=linux_url))
+    keyboard = get_instruction_detail_keyboard(buttons)
+    await _send_instructions(callback, text, keyboard)
 
 
 @router.callback_query(lambda c: c.data in goods.get_callbacks())
@@ -521,16 +522,11 @@ async def callback_back_to_buy_menu(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back:main")
 async def callback_back_to_main(callback: CallbackQuery):
-    had_test_subscription = await had_test_sub(callback.from_user.id)
-    text = _("Hello, {name} 👋🏻\n\nSelect an action ⬇️").format(
-        name=callback.from_user.first_name,
-        title=glv.config.get('SHOP_NAME', 'VPN Shop'),
-    )
     try:
         await callback.message.delete()
     except Exception:
         pass
-    await callback.message.answer(text, reply_markup=get_main_menu_keyboard(had_test_subscription))
+    await start(callback.message)
     await callback.answer()
 
 
