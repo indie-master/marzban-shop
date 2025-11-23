@@ -10,7 +10,7 @@ services:
             SHOP_NAME: ${SHOP_NAME}
             PROTOCOLS: ${PROTOCOLS}
             TEST_PERIOD: ${TEST_PERIOD}
-            PERIOD_LIMIT: ${PERIOD_LIMIT}
+            TEST_PERIOD_DAYS: ${TEST_PERIOD_DAYS}
             ABOUT: ${ABOUT}
             RULES_LINK: ${RULES_LINK}
             SUPPORT_LINK: ${SUPPORT_LINK}
@@ -33,9 +33,14 @@ services:
             RENEW_NOTIFICATION_TIME: ${RENEW_NOTIFICATION_TIME}
             TG_INFO_CHANEL: ${TG_INFO_CHANEL}
             STARS_PAYMENT_ENABLED: ${STARS_PAYMENT_ENABLED}
+            PAY_SBER_URL: ${PAY_SBER_URL}
+            PAY_TBANK_URL: ${PAY_TBANK_URL}
+            ADMIN_IDS: ${ADMIN_IDS}
+            PROTOCOLS_CONFIG: ${PROTOCOLS_CONFIG}
             EXPIRED_NOTIFICATION_TIME: ${EXPIRED_NOTIFICATION_TIME}
         volumes:
             - "./goods.json:/app/goods.json"
+            - "./protocols.json:/app/protocols.json"
             - "./locales:/app/locales"
         depends_on:
             db:

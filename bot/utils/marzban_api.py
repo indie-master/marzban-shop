@@ -1,3 +1,5 @@
+import json
+import os
 import time
 import aiohttp
 import requests
@@ -5,27 +7,27 @@ import requests
 from db.methods import get_marzban_profile_db
 import glv
 
-PROTOCOLS = {
-    "vmess": [
-        {},
-        ["VMess TCP"]
-    ],
-    "vless": [
-        {
+PROTOCOLS_DEFAULT = {
+    "vmess": {
+        "proxies": {},
+        "inbounds": ["VMess TCP"],
+    },
+    "vless": {
+        "proxies": {
             "flow": "xtls-rprx-vision"
         },
-        ["VLESS + TCP + REALITY"]
-    ],
-    "trojan": [
-        {},
-        ["Trojan Websocket TLS"]
-    ],
-    "shadowsocks": [
-        {
+        "inbounds": ["VLESS + TCP + REALITY"],
+    },
+    "trojan": {
+        "proxies": {},
+        "inbounds": ["Trojan Websocket TLS"],
+    },
+    "shadowsocks": {
+        "proxies": {
             "method": "chacha20-ietf-poly1305"
         },
-        ["Shadowsocks TCP"]
-    ]
+        "inbounds": ["Shadowsocks TCP"],
+    },
 }
 
 class Marzban:
@@ -83,13 +85,23 @@ class Marzban:
 def get_protocols() -> dict:
     proxies = {}
     inbounds = {}
-    
+
+    config_path = glv.config.get('PROTOCOLS_CONFIG')
+    protocols_config = PROTOCOLS_DEFAULT
+    if config_path and os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                protocols_config = json.load(f)
+        except Exception:
+            protocols_config = PROTOCOLS_DEFAULT
+
     for proto in glv.config['PROTOCOLS']:
         l = proto.lower()
-        if l not in PROTOCOLS:
+        if l not in protocols_config:
             continue
-        proxies[l] = PROTOCOLS[l][0]
-        inbounds[l] = PROTOCOLS[l][1]
+        proto_data = protocols_config[l]
+        proxies[l] = proto_data.get('proxies', {})
+        inbounds[l] = proto_data.get('inbounds', [])
     return {
         "proxies": proxies,
         "inbounds": inbounds
@@ -107,11 +119,14 @@ async def check_if_user_exists(name: str) -> bool:
         return False
 
 async def get_marzban_profile(tg_id: int):
-    result = await get_marzban_profile_db(tg_id)
-    res = await check_if_user_exists(result.vpn_id)
+    db_user = await get_marzban_profile_db(tg_id)
+    if db_user is None:
+        return None
+
+    res = await check_if_user_exists(db_user.vpn_id)
     if not res:
         return None
-    return await panel.get_user(result.vpn_id)
+    return await panel.get_user(db_user.vpn_id)
 
 async def generate_test_subscription(username: str):
     res = await check_if_user_exists(username)
@@ -119,16 +134,16 @@ async def generate_test_subscription(username: str):
         user = await panel.get_user(username)
         user['status'] = 'active'
         if user['expire'] < time.time():
-            user['expire'] = get_test_subscription(glv.config['PERIOD_LIMIT'])
+            user['expire'] = get_test_subscription(glv.config['TEST_PERIOD_DAYS'])
         else:
-            user['expire'] += get_test_subscription(glv.config['PERIOD_LIMIT'], True)
+            user['expire'] += get_test_subscription(glv.config['TEST_PERIOD_DAYS'], True)
         result = await panel.modify_user(username, user)
     else:
         user = {
             'username': username,
             'proxies': ps["proxies"],
             'inbounds': ps["inbounds"],
-            'expire': get_test_subscription(glv.config['PERIOD_LIMIT']),
+            'expire': get_test_subscription(glv.config['TEST_PERIOD_DAYS']),
             'data_limit': 0,
             'data_limit_reset_strategy': "no_reset",
         }
@@ -157,8 +172,8 @@ async def generate_marzban_subscription(username: str, good):
         result = await panel.add_user(user)
     return result
 
-def get_test_subscription(hours: int, additional= False) -> int:
-    return (0 if additional else int(time.time())) + 60 * 60 * hours
+def get_test_subscription(days: int, additional= False) -> int:
+    return (0 if additional else int(time.time())) + 60 * 60 * 24 * days
 
 def get_subscription_end_date(months: int, additional = False) -> int:
     return (0 if additional else int(time.time())) + 60 * 60 * 24 * 30 * months

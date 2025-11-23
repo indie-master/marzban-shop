@@ -7,14 +7,12 @@ from aiohttp.web_request import Request
 from aiohttp import web
 
 from db.methods import (
-    get_marzban_profile_db,
     get_yookassa_payment,
     get_cryptomus_payment,
     delete_payment
 )
-from keyboards import get_main_menu_keyboard
-from utils import webhook_data, goods, marzban_api
-from utils import get_i18n_string
+from utils import webhook_data
+from utils.payments import process_successful_payment
 import glv
 
 YOOKASSA_IPS = (
@@ -38,16 +36,7 @@ async def check_crypto_payment(request: Request):
     if payment == None:
         return web.Response()
     if data['status'] in ['paid', 'paid_over']:
-        good = goods.get(payment.callback)
-        user = await get_marzban_profile_db(payment.tg_id)
-        await marzban_api.generate_marzban_subscription(user.vpn_id, good)
-        text = get_i18n_string("Thank you for choice ❤️\n️\n<a href=\"{link}\">Subscribe</a> so you don't miss any announcements ✅\n️\nYour subscription is purchased and available in the \"My subscription 👤\" section.", payment.lang)
-        await glv.bot.send_message(payment.chat_id,
-            text.format(
-                link=glv.config['TG_INFO_CHANEL']
-            ),
-            reply_markup=get_main_menu_keyboard(True, payment.lang)
-        )
+        await process_successful_payment(payment.tg_id, payment.callback, payment.chat_id, payment.lang)
         await delete_payment(payment.payment_uuid)
     if data['status'] == 'cancel':
         await delete_payment(payment.payment_uuid)
@@ -72,16 +61,7 @@ async def check_yookassa_payment(request: Request):
     if payment == None:
         return web.Response()
     if data['status'] in ['succeeded']:
-        good = goods.get(payment.callback)
-        user = await get_marzban_profile_db(payment.tg_id)
-        await marzban_api.generate_marzban_subscription(user.vpn_id, good)
-        text = get_i18n_string("Thank you for choice ❤️\n️\n<a href=\"{link}\">Subscribe</a> so you don't miss any announcements ✅\n️\nYour subscription is purchased and available in the \"My subscription 👤\" section.", payment.lang)
-        await glv.bot.send_message(payment.chat_id,
-            text.format(
-                link=glv.config['TG_INFO_CHANEL']
-            ),
-            reply_markup=get_main_menu_keyboard(True, payment.lang)
-        )
+        await process_successful_payment(payment.tg_id, payment.callback, payment.chat_id, payment.lang)
         await delete_payment(payment.payment_id)
     if data['status'] == 'canceled':
         await delete_payment(payment.payment_id)
