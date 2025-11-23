@@ -111,6 +111,14 @@ async def instructions(message: Message):
         reply_markup=get_instructions_menu_keyboard(),
     )
 
+
+@router.message(F.text == __("Instructions 📚"))
+async def instructions(message: Message):
+    await message.answer(
+        _("Choose your platform ⬇️"),
+        reply_markup=get_instructions_menu_keyboard(),
+    )
+
 @router.message(F.text == __("5 days free 🆓"))
 async def test_subscription(message: Message):
     result = await had_test_sub(message.from_user.id)
