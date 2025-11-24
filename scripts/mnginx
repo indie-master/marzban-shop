@@ -5,7 +5,7 @@ NGINX_SERVICE="nginx"
 NGINX_CONF="/etc/nginx/nginx.conf"
 SITE_AVAILABLE="/etc/nginx/sites-available/bot.conf"
 SITE_ENABLED="/etc/nginx/sites-enabled/bot.conf"
-INSTALL_DIR="/opt/marzban-shop"
+INSTALL_DIR="/root/marzban-shop"
 NGINX_EXAMPLE_CONF="$INSTALL_DIR/nginx/nginx.conf.example"
 NGINX_BOT_EXAMPLE_CONF="$INSTALL_DIR/nginx/bot.conf.example"
 
