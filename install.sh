@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-INSTALL_DIR="/opt/marzban-shop"
+INSTALL_DIR="/root/marzban-shop"
 REPO_URL="https://github.com/indie-master/marzban-shop.git" # replace USER with your fork
 DOMAIN_BOT="bot.example.com"
 EMAIL_LETSENCRYPT="admin@example.com"
