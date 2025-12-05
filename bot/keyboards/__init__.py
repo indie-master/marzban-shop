@@ -5,3 +5,7 @@ from .back import get_back_keyboard
 from .pay import get_pay_keyboard
 from .subscription import get_subscription_keyboard
 from .xtr_pay import get_xtr_pay_keyboard
+from .manual_payment import get_manual_payment_keyboard, get_manual_admin_keyboard
+from .instructions import get_instructions_menu_keyboard, get_instruction_detail_keyboard
+from .faq import get_faq_keyboard
+from .support import get_support_keyboard

@@ -30,3 +30,21 @@ class YPayments(Base):
     payment_id = Column(String(64))
     chat_id = Column(BigInteger)
     callback = Column(String(64))
+
+
+class ManualPayments(Base):
+    __tablename__ = "manual_payments"
+
+    id = Column(BigInteger, primary_key=True, unique=True, autoincrement=True)
+    tg_id = Column(BigInteger)
+    username = Column(String(64))
+    lang = Column(String(64))
+    chat_id = Column(BigInteger)
+    callback = Column(String(64))
+    plan_name = Column(String(128))
+    amount = Column(String(64))
+    status = Column(String(64))
+    proof_message_id = Column(BigInteger)
+    proof_chat_id = Column(BigInteger)
+    admin_message_id = Column(BigInteger)
+    admin_chat_id = Column(BigInteger)
