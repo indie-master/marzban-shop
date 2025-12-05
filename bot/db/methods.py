@@ -13,9 +13,8 @@ async def create_vpn_profile(tg_id: int):
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        row = result.fetchone()
-        # row[0] — это сам объект VPNUsers
-        if row is not None:
+        existing: VPNUsers | None = result.scalar_one_or_none()
+        if existing is not None:
             return
 
         hash = hashlib.md5(str(tg_id).encode()).hexdigest()
@@ -23,30 +22,33 @@ async def create_vpn_profile(tg_id: int):
         await conn.execute(sql_query)
         await conn.commit()
 
-
 async def get_marzban_profile_db(tg_id: int) -> VPNUsers | None:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        row = result.fetchone()
-        return row[0] if row is not None else None
-
+        return result.scalar_one_or_none()
 
 async def get_marzban_profile_by_vpn_id(vpn_id: str) -> VPNUsers | None:
     async with engine.connect() as conn:
         sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
         result = await conn.execute(sql_query)
-        row = result.fetchone()
-        return row[0] if row is not None else None
-
+        return result.scalar_one_or_none()
 
 async def had_test_sub(tg_id: int) -> bool:
     async with engine.connect() as conn:
-        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
+        sql_query = select(VPNUsers.test).where(VPNUsers.tg_id == tg_id)
         result = await conn.execute(sql_query)
-        row = result.fetchone()
-        user: VPNUsers | None = row[0] if row is not None else None
-    return bool(user.test) if user is not None else False
+        value = result.scalar_one_or_none()
+
+    if value is None:
+        return False
+
+    # Depending on SQLAlchemy version/configuration, scalar_one_or_none can return either the
+    # ORM object or the scalar column value. Normalize both cases to a boolean result.
+    if isinstance(value, VPNUsers):
+        return bool(value.test)
+
+    return bool(value)
 
 async def update_test_subscription_state(tg_id: int):
     async with engine.connect() as conn:

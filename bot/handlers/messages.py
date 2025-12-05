@@ -14,7 +14,12 @@ from keyboards import (
     get_support_keyboard,
 )
 from keyboards.main_menu import get_trial_text
-from db.methods import had_test_sub, update_test_subscription_state, get_marzban_profile_db
+from db.methods import (
+    had_test_sub,
+    update_test_subscription_state,
+    get_marzban_profile_db,
+    create_vpn_profile,
+)
 from utils import marzban_api
 from utils.payments import format_expire
 from utils.images import send_section_image
@@ -119,13 +124,27 @@ async def test_subscription(message: Message):
             _("Your subscription is available in the \"My subscription 👤\" section."),
             reply_markup=get_main_menu_keyboard(True))
         return
-    result = await get_marzban_profile_db(message.from_user.id)
-    result = await marzban_api.generate_test_subscription(result.vpn_id)
+
+    profile = await get_marzban_profile_db(message.from_user.id)
+    if profile is None:
+        await create_vpn_profile(message.from_user.id)
+        profile = await get_marzban_profile_db(message.from_user.id)
+
+    if profile is None:
+        await message.answer(
+            _("Your profile is not active at the moment.\n\nYou can choose \"Join 🏄🏻‍♂️\"."),
+            reply_markup=get_main_menu_keyboard(False),
+        )
+        return
+
+    result = await marzban_api.generate_test_subscription(profile.vpn_id)
     await update_test_subscription_state(message.from_user.id)
     await message.answer(
-        _("Thank you for choice ❤️\n️\n<a href=\"{link}\">Subscribe</a> so you don't miss any announcements ✅\n️\nYour subscription is purchased and available in the \"My subscription 👤\" section.").format(
+        _(
+            "Thank you for choice ❤️\n️\n<a href=\"{link}\">Subscribe</a> so you don't miss any announcements ✅\n️\nYour subscription is purchased and available in the \"My subscription 👤\" section."
+        ).format(
             link=glv.config['TG_INFO_CHANEL']),
-        reply_markup=get_main_menu_keyboard(True)
+        reply_markup=get_main_menu_keyboard(True),
     )
     
 @router.message(F.text.in_([__("⏪ Back"), __("⬅️ Назад")]))
