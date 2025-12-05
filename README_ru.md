@@ -21,7 +21,7 @@ Telegram-бот для продажи и продления VPN-подписок
 ## Быстрая установка (one-click)
 1. Скачайте и запустите установщик (при необходимости обновите REPO_URL в `install.sh` на адрес вашего форка):
    ```bash
-   curl -O https://raw.githubusercontent.com/USER/marzban-shop/main/install.sh
+   curl -O https://raw.githubusercontent.com/indie-master/marzban-shop/main/install.sh
    chmod +x install.sh
    sudo ./install.sh
    ```

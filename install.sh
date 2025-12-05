@@ -2,7 +2,7 @@
 set -e
 
 INSTALL_DIR="/opt/marzban-shop"
-REPO_URL="https://github.com/USER/marzban-shop.git" # replace USER with your fork
+REPO_URL="https://github.com/indie-master/marzban-shop.git" # replace USER with your fork
 DOMAIN_BOT="bot.example.com"
 EMAIL_LETSENCRYPT="admin@example.com"
 SKIP_NGINX_SETUP=false
