@@ -11,44 +11,100 @@ engine = create_async_engine(glv.config["DB_URL"])
 
 async def create_vpn_profile(tg_id: int):
     async with engine.connect() as conn:
-        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        result = await conn.execute(sql_query)
+        # проверяем, есть ли уже запись
+        stmt = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
+        result = await conn.execute(stmt)
         existing: VPNUsers | None = result.scalar_one_or_none()
         if existing is not None:
             return
 
-        hash = hashlib.md5(str(tg_id).encode()).hexdigest()
-        sql_query = insert(VPNUsers).values(tg_id=tg_id, vpn_id=hash)
-        await conn.execute(sql_query)
+        # лёгкая обфускация: sw_<10 символов md5(tg_id + соль)>
+        salt = glv.config.get("SHOP_NAME", "swiftlessvpn")
+        seed = f"{tg_id}:{salt}"
+        hash_part = hashlib.md5(seed.encode()).hexdigest()[:10]
+        username = f"sw_{hash_part}"
+
+        stmt = insert(VPNUsers).values(tg_id=tg_id, vpn_id=username)
+        await conn.execute(stmt)
         await conn.commit()
 
+
+
 async def get_marzban_profile_db(tg_id: int) -> VPNUsers | None:
+    """Вернуть объект с полями vpn_id / tg_id / test по tg_id."""
     async with engine.connect() as conn:
-        sql_query = select(VPNUsers).where(VPNUsers.tg_id == tg_id)
-        result = await conn.execute(sql_query)
-        return result.scalar_one_or_none()
+        # Если VPNUsers – Table, у него есть .c, иначе используем атрибут tg_id
+        column_tg_id = VPNUsers.c.tg_id if hasattr(VPNUsers, "c") else VPNUsers.tg_id
+        stmt = select(VPNUsers).where(column_tg_id == tg_id)
+        result = await conn.execute(stmt)
+        row = result.first()
+
+    if row is None:
+        return None
+
+    m = row._mapping
+
+    # Вариант с ORM: в маппинге лежит сам объект под ключом VPNUsers
+    if VPNUsers in m:
+        return m[VPNUsers]
+
+    # Вариант с Core: в маппинге лежат отдельные столбцы (id, tg_id, vpn_id, test, ...)
+    class _SimpleVPNUser:
+        __slots__ = ("id", "tg_id", "vpn_id", "test")
+
+        def __init__(self, mapping):
+            # keys: 'id', 'tg_id', 'vpn_id', 'test' – имена столбцов в таблице
+            self.id = mapping.get("id")
+            self.tg_id = mapping.get("tg_id")
+            self.vpn_id = mapping.get("vpn_id")
+            self.test = mapping.get("test")
+
+    return _SimpleVPNUser(m)
+
 
 async def get_marzban_profile_by_vpn_id(vpn_id: str) -> VPNUsers | None:
+    """Вернуть объект с полями vpn_id / tg_id / test по vpn_id."""
     async with engine.connect() as conn:
-        sql_query = select(VPNUsers).where(VPNUsers.vpn_id == vpn_id)
-        result = await conn.execute(sql_query)
-        return result.scalar_one_or_none()
+        column_vpn_id = VPNUsers.c.vpn_id if hasattr(VPNUsers, "c") else VPNUsers.vpn_id
+        stmt = select(VPNUsers).where(column_vpn_id == vpn_id)
+        result = await conn.execute(stmt)
+        row = result.first()
+
+    if row is None:
+        return None
+
+    m = row._mapping
+
+    if VPNUsers in m:
+        return m[VPNUsers]
+
+    class _SimpleVPNUser:
+        __slots__ = ("id", "tg_id", "vpn_id", "test")
+
+        def __init__(self, mapping):
+            self.id = mapping.get("id")
+            self.tg_id = mapping.get("tg_id")
+            self.vpn_id = mapping.get("vpn_id")
+            self.test = mapping.get("test")
+
+    return _SimpleVPNUser(m)
+
+
 
 async def had_test_sub(tg_id: int) -> bool:
+    """Был ли уже тестовый период у пользователя."""
     async with engine.connect() as conn:
-        sql_query = select(VPNUsers.test).where(VPNUsers.tg_id == tg_id)
-        result = await conn.execute(sql_query)
+        stmt = select(VPNUsers.test).where(VPNUsers.tg_id == tg_id)
+        result = await conn.execute(stmt)
         value = result.scalar_one_or_none()
 
+    # если записи нет или test = NULL
     if value is None:
         return False
 
-    # Depending on SQLAlchemy version/configuration, scalar_one_or_none can return either the
-    # ORM object or the scalar column value. Normalize both cases to a boolean result.
-    if isinstance(value, VPNUsers):
-        return bool(value.test)
-
+    # value уже скаляр (0/1 или True/False)
     return bool(value)
+
 
 async def update_test_subscription_state(tg_id: int):
     async with engine.connect() as conn:

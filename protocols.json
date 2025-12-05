@@ -10,7 +10,9 @@
       "flow": "xtls-rprx-vision"
     },
     "inbounds": [
-      "VLESS + TCP + REALITY"
+      "VLESS + TCP + REALITY",
+      "VLESS+TCP+REALITY+12386",
+      "VLESS XHTTP REALITY"
     ]
   },
   "trojan": {
