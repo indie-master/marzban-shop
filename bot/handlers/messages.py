@@ -32,8 +32,8 @@ router = Router(name="messages-router")
 
 
 def _as_quote_block(text: str) -> str:
-    escaped = html.escape(text).replace("\n", "<br>")
-    return f"<blockquote>{escaped}</blockquote>"
+    escaped_lines = [html.escape(line) for line in text.splitlines()]
+    return "<blockquote>" + "\n".join(escaped_lines) + "</blockquote>"
 
 
 def _resolve_service_link() -> str:
