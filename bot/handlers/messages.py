@@ -184,11 +184,11 @@ async def information(message: Message):
 async def support(message: Message):
     await send_section_image(message, "SUPPORT_IMAGE_ENABLED", "SUPPORT_IMAGE_PATH")
     support_link = glv.config.get('SUPPORT_URL') or ""
-    await message.answer(
-        _("Follow the <a href=\"{link}\">link</a> and ask us a question. We are always happy to help 🤗").format(
-            link=support_link),
-        reply_markup=get_support_keyboard(),
-    )
+    if support_link:
+        text = _("Нужна помощь? Нажмите кнопку ниже и напишите нам.")
+    else:
+        text = _("Контакт поддержки пока не настроен. Пожалуйста, обратитесь к администратору сервиса.")
+    await message.answer(text, reply_markup=get_support_keyboard())
 
 
 @router.message(F.text == __("Instructions 📚"))

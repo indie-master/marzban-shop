@@ -10,6 +10,8 @@ config = {
     'TEST_PERIOD': os.environ.get('TEST_PERIOD', 'false').lower() == 'true',
     'TEST_PERIOD_DAYS': int(os.environ.get('TEST_PERIOD_DAYS', os.environ.get('PERIOD_LIMIT', 5))),
     'ABOUT': os.environ.get('ABOUT'),
+    'START_TEXT': os.environ.get('START_TEXT'),
+    'FAQ_ABOUT_TEXT': os.environ.get('FAQ_ABOUT_TEXT'),
     'RULES_LINK': os.environ.get('RULES_LINK'),
     'SUPPORT_URL': os.environ.get('SUPPORT_URL', os.environ.get('SUPPORT_LINK', '')),
     'SUPPORT_LINK': os.environ.get('SUPPORT_LINK'),

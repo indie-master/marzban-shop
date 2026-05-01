@@ -20,6 +20,7 @@ from keyboards import (
     get_main_menu_keyboard,
     get_instructions_menu_keyboard,
     get_instruction_detail_keyboard,
+    get_faq_keyboard,
 )
 
 from db.methods import (
@@ -478,6 +479,24 @@ async def instruction_platform(callback: CallbackQuery):
     subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
     keyboard = _instruction_keyboard(data.get("download_url"), subscription_url)
     await _send_instructions(callback, data.get("text"), keyboard)
+
+
+@router.callback_query(F.data == "faq:about")
+async def faq_about(callback: CallbackQuery):
+    default_text = _(
+        "Сервис предоставляет безопасное и анонимное подключение к интернету.\n"
+        "Он защищает ваши данные и обеспечивает конфиденциальность ваших онлайн-активностей.\n\n"
+        "Условия использования:\n"
+        "1. Не использовать для незаконных целей.\n"
+        "2. Не нарушать правила обслуживания провайдера.\n"
+        "3. Соблюдать законы вашей страны при использовании сервиса.\n"
+        "4. Безопасно хранить и не передавать учетные данные для доступа к сервису.\n\n"
+        "❗️Важная информация❗️\n\n"
+        "5. Использование торрентов: Подписка будет заблокирована в случае использования сервиса для скачивания или раздачи файлов через P2P сети и торренты.\n"
+        "6. Ограничение по устройствам: Подписка допускает подключение максимум 3 устройства."
+    )
+    text = glv.config.get('FAQ_ABOUT_TEXT') or default_text
+    await _send_instructions(callback, text, get_faq_keyboard())
 
 
 @router.callback_query(lambda c: c.data in goods.get_callbacks())
