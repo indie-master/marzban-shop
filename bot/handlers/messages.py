@@ -37,7 +37,7 @@ def _as_quote_block(text: str) -> str:
 
 
 def _resolve_service_link() -> str:
-    return glv.config.get('SERVICE_URL') or glv.config.get('SUPPORT_LINK') or ""
+    return glv.config.get('SERVICE_URL') or glv.config.get('SUPPORT_URL') or ""
 
 
 def _resolve_profile_name(user: dict, tg_user) -> str:
@@ -58,7 +58,7 @@ def _resolve_profile_name(user: dict, tg_user) -> str:
 def _build_subscription_instruction(sub_url: str) -> str:
     service_name = glv.config.get('SERVICE_NAME') or glv.config.get('SHOP_NAME') or "VPN Service"
     service_url = _resolve_service_link()
-    support_url = glv.config.get('SUPPORT_LINK') or service_url
+    support_url = glv.config.get('SUPPORT_URL') or service_url
 
     client_name = glv.config.get('CLIENT_NAME') or "HAPP"
     ios_name = glv.config.get('CLIENT_IOS_NAME') or client_name
@@ -80,8 +80,9 @@ def _build_subscription_instruction(sub_url: str) -> str:
         f'<a href="{html.escape(linux_url)}">{html.escape(linux_name)} (Linux)</a>' if linux_url else f'{html.escape(linux_name)} (Linux)',
     ]
 
-    service_line = f'{html.escape(service_name)} (<a href="{html.escape(service_url)}">{html.escape(service_url)}</a>)' if service_url else html.escape(service_name)
-    support_line = f'<a href="{html.escape(support_url)}">{html.escape(support_url)}</a>' if support_url else "—"
+    service_linked_name = f'<a href="{html.escape(service_url)}">{html.escape(service_name)}</a>' if service_url else html.escape(service_name)
+    support_phrase = f'<a href="{html.escape(support_url)}">{_("поддержку")}</a>' if support_url else _("поддержку")
+    team_sign = service_linked_name if service_url else html.escape(service_name)
 
     return _(
         "Инструкция по установке и настройке {service}.\n\n"
@@ -94,15 +95,15 @@ def _build_subscription_instruction(sub_url: str) -> str:
         "3. Выбрать любой доступный сервер и нажать кнопку \"ВКЛ\".\n\n"
         "Альтернативный вариант настройки доступен при переходе по ссылке подписки напрямую, "
         "там отображается информация о самой подписке, а так же есть все необходимые инструкции.\n\n"
-        "Если возникнут вопросы просим обращаться в нашу поддержку. ({support})\n\n"
+        "Если возникнут вопросы, просим обращаться в нашу {support_phrase}.\n\n"
         "С уважением, команда {service_name}."
     ).format(
-        service=service_line,
+        service=service_linked_name,
         client=html.escape(client_name),
         links=" | ".join(app_links),
         sub_url=html.escape(sub_url),
-        support=support_line,
-        service_name=service_line,
+        support_phrase=support_phrase,
+        service_name=team_sign,
     )
 
 
@@ -140,12 +141,6 @@ async def profile(message: Message):
 
     data_limit = user.get('data_limit') or 0
     used_traffic = user.get('used_traffic') or 0
-    remaining_text = _("Remaining traffic: ♾️")
-    if data_limit:
-        remaining = max(data_limit - used_traffic, 0)
-        remaining_gb = remaining / (1024 ** 3)
-        remaining_text = _("Remaining traffic: {gb} GB").format(gb=f"{remaining_gb:.2f}")
-
     sub_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
     status_text = _("🟢 Активна") if is_active else _("🔴 Не активна")
     profile_name = _resolve_profile_name(user, message.from_user)
@@ -188,7 +183,7 @@ async def information(message: Message):
 @router.message(F.text == __("Support ❤️"))
 async def support(message: Message):
     await send_section_image(message, "SUPPORT_IMAGE_ENABLED", "SUPPORT_IMAGE_PATH")
-    support_link = glv.config.get('SUPPORT_LINK') or ""
+    support_link = glv.config.get('SUPPORT_URL') or ""
     await message.answer(
         _("Follow the <a href=\"{link}\">link</a> and ask us a question. We are always happy to help 🤗").format(
             link=support_link),
