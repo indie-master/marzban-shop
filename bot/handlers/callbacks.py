@@ -421,6 +421,8 @@ def _build_instruction_platform_data() -> dict[str, dict]:
         "android": {
             "title": _("Android"),
             "download_url": glv.config.get('CLIENT_ANDROID_URL') or glv.config.get('CLIENT_ANDROID_ALT_URL'),
+            "download_play_url": glv.config.get('CLIENT_ANDROID_URL'),
+            "download_apk_url": glv.config.get('CLIENT_ANDROID_ALT_URL'),
             "text": _("Настройка {client} на Android:\n1. Установите приложение.\n2. Нажмите «Добавить подписку».\n3. Подтвердите импорт и включите VPN.").format(client=client_name),
         },
         "windows": {
@@ -437,20 +439,22 @@ def _build_instruction_platform_data() -> dict[str, dict]:
 
 
 def _build_subscription_deeplink(subscription_url: str) -> str:
-    scheme = glv.config.get('CLIENT_SUBSCRIPTION_URL_SCHEME') or "happ://add{url}"
-    encoded_url = quote(subscription_url, safe="")
-    return scheme.replace("{url}", encoded_url)
+    scheme = glv.config.get('CLIENT_SUBSCRIPTION_URL_SCHEME') or "happ://add/{url}"
+    return scheme.replace("{url}", subscription_url)
 
 
 def _build_routing_deeplink() -> str:
-    scheme = glv.config.get('CLIENT_ROUTING_URL_SCHEME') or "happ://routing/add{base64}"
+    scheme = glv.config.get('CLIENT_ROUTING_URL_SCHEME') or "happ://routing/add/{base64}"
     base64_value = glv.config.get('CLIENT_ROUTING_DEFAULT_BASE64') or ""
     return scheme.replace("{base64}", base64_value)
 
 
-def _instruction_keyboard(platform_key: str, download_url: str | None, has_subscription: bool) -> InlineKeyboardMarkup:
+def _instruction_keyboard(platform_key: str, has_subscription: bool, download_url: str | None = None, download_play_url: str | None = None, download_apk_url: str | None = None) -> InlineKeyboardMarkup:
     buttons = []
-    if download_url:
+    if platform_key == "android" and download_play_url and download_apk_url:
+        buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать из Google Play"), url=download_play_url))
+        buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать APK"), url=download_apk_url))
+    elif download_url:
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать приложение"), url=download_url))
     if has_subscription:
         buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), callback_data=f"instr_sub_{platform_key}"))
@@ -476,7 +480,13 @@ async def instruction_platform(callback: CallbackQuery):
     text = data.get("text")
     if not has_subscription:
         text += _("\n\nПодписка пока не активна. Оформите подписку в разделе «Join 🏄🏻‍♂️», затем вернитесь сюда.")
-    keyboard = _instruction_keyboard(platform_key, data.get("download_url"), has_subscription)
+    keyboard = _instruction_keyboard(
+        platform_key=platform_key,
+        has_subscription=has_subscription,
+        download_url=data.get("download_url"),
+        download_play_url=data.get("download_play_url"),
+        download_apk_url=data.get("download_apk_url"),
+    )
     await _send_instructions(callback, text, keyboard)
 
 
