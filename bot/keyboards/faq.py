@@ -8,31 +8,14 @@ import glv
 def get_faq_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     links = [
-        (
-            glv.config.get('FAQ_PRIVACY_ENABLED'),
-            glv.config.get('FAQ_PRIVACY_URL'),
-            _("Privacy policy"),
-        ),
-        (
-            glv.config.get('FAQ_TERMS_ENABLED'),
-            glv.config.get('FAQ_TERMS_URL'),
-            _("User agreement"),
-        ),
-        (
-            glv.config.get('FAQ_RULES_ENABLED'),
-            glv.config.get('FAQ_RULES_URL'),
-            _("Rules"),
-        ),
-        (
-            glv.config.get('FAQ_OFFER_ENABLED'),
-            glv.config.get('FAQ_OFFER_URL'),
-            _("Offer"),
-        ),
+        (glv.config.get('FAQ_RULES_URL'), _("Правила")),
+        (glv.config.get('FAQ_PRIVACY_URL'), _("Политика конфиденциальности")),
+        (glv.config.get('FAQ_TERMS_URL'), _("Пользовательское соглашение")),
     ]
-
-    for enabled, url, title in links:
-        if enabled and url:
+    for url, title in links:
+        if url:
             builder.row(InlineKeyboardButton(text=title, url=url))
+    builder.row(InlineKeyboardButton(text=_("О сервисе"), callback_data="faq:about"))
 
     builder.row(
         InlineKeyboardButton(
