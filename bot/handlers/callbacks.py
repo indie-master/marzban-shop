@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from urllib.parse import quote
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from aiogram import Router, F, Dispatcher
 from aiogram.fsm.context import FSMContext
@@ -438,27 +438,31 @@ def _build_instruction_platform_data() -> dict[str, dict]:
     }
 
 
-def _build_subscription_deeplink(subscription_url: str) -> str:
-    scheme = glv.config.get('CLIENT_SUBSCRIPTION_URL_SCHEME') or "happ://add/{url}"
-    return scheme.replace("{url}", subscription_url)
+def _build_subscription_action_url(subscription_url: str, action: str) -> str:
+    parsed = urlsplit(subscription_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["action"] = action
+    return urlunsplit(parsed._replace(query=urlencode(query)))
 
 
-def _build_routing_deeplink() -> str:
-    scheme = glv.config.get('CLIENT_ROUTING_URL_SCHEME') or "happ://routing/add/{base64}"
-    base64_value = glv.config.get('CLIENT_ROUTING_DEFAULT_BASE64') or ""
-    return scheme.replace("{base64}", base64_value)
-
-
-def _instruction_keyboard(platform_key: str, has_subscription: bool, download_url: str | None = None, download_play_url: str | None = None, download_apk_url: str | None = None) -> InlineKeyboardMarkup:
+def _instruction_keyboard(
+    platform_key: str,
+    has_subscription: bool,
+    download_url: str | None = None,
+    download_play_url: str | None = None,
+    download_apk_url: str | None = None,
+    subscription_action_url: str | None = None,
+    routing_action_url: str | None = None,
+) -> InlineKeyboardMarkup:
     buttons = []
     if platform_key == "android" and download_play_url and download_apk_url:
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать из Google Play"), url=download_play_url))
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать APK"), url=download_apk_url))
     elif download_url:
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать приложение"), url=download_url))
-    if has_subscription:
-        buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), callback_data=f"instr_sub_{platform_key}"))
-        buttons.append(InlineKeyboardButton(text=_("🧭 Добавить routing"), callback_data=f"instr_route_{platform_key}"))
+    if has_subscription and subscription_action_url and routing_action_url:
+        buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), url=subscription_action_url))
+        buttons.append(InlineKeyboardButton(text=_("🧭 Добавить routing"), url=routing_action_url))
     return get_instruction_detail_keyboard(buttons)
 
 
@@ -480,48 +484,22 @@ async def instruction_platform(callback: CallbackQuery):
     text = data.get("text")
     if not has_subscription:
         text += _("\n\nПодписка пока не активна. Оформите подписку в разделе «Join 🏄🏻‍♂️», затем вернитесь сюда.")
+    subscription_action_url = None
+    routing_action_url = None
+    if has_subscription:
+        subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
+        subscription_action_url = _build_subscription_action_url(subscription_url, "add")
+        routing_action_url = _build_subscription_action_url(subscription_url, "routing")
     keyboard = _instruction_keyboard(
         platform_key=platform_key,
         has_subscription=has_subscription,
         download_url=data.get("download_url"),
         download_play_url=data.get("download_play_url"),
         download_apk_url=data.get("download_apk_url"),
+        subscription_action_url=subscription_action_url,
+        routing_action_url=routing_action_url,
     )
     await _send_instructions(callback, text, keyboard)
-
-
-@router.callback_query(F.data.startswith("instr_sub_"))
-async def instruction_send_subscription_link(callback: CallbackQuery):
-    user = await marzban_api.get_marzban_profile(callback.from_user.id)
-    if not user:
-        await callback.answer(_("Подписка не активна."), show_alert=True)
-        return
-    subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
-    subscription_deeplink = _build_subscription_deeplink(subscription_url)
-    await callback.message.answer(
-        _("Нажмите и скопируйте ссылку для импорта в {client}:\n<code>{link}</code>").format(
-            client=glv.config.get('CLIENT_NAME') or "HAPP",
-            link=subscription_deeplink,
-        )
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("instr_route_"))
-async def instruction_send_routing_link(callback: CallbackQuery):
-    user = await marzban_api.get_marzban_profile(callback.from_user.id)
-    if not user:
-        await callback.answer(_("Подписка не активна."), show_alert=True)
-        return
-    routing_name = glv.config.get('CLIENT_ROUTING_DEFAULT_NAME') or "Routing"
-    routing_deeplink = _build_routing_deeplink()
-    await callback.message.answer(
-        _("Нажмите и скопируйте ссылку routing «{name}»:\n<code>{link}</code>").format(
-            name=routing_name,
-            link=routing_deeplink,
-        )
-    )
-    await callback.answer()
 
 
 @router.callback_query(F.data == "faq:about")
