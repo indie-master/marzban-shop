@@ -448,13 +448,12 @@ def _build_routing_deeplink() -> str:
     return scheme.replace("{base64}", base64_value)
 
 
-def _instruction_keyboard(download_url: str | None, subscription_url: str) -> InlineKeyboardMarkup:
-    routing_name = glv.config.get('CLIENT_ROUTING_DEFAULT_NAME') or "Routing"
+def _instruction_keyboard(download_url: str | None, subscription_url: str | None) -> InlineKeyboardMarkup:
     buttons = []
     if download_url:
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать приложение"), url=download_url))
-    buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), url=_build_subscription_deeplink(subscription_url)))
-    buttons.append(InlineKeyboardButton(text=_("🧭 Добавить routing: {name}").format(name=routing_name), url=_build_routing_deeplink()))
+    if subscription_url:
+        buttons.append(InlineKeyboardButton(text=_("🌐 Открыть страницу подписки"), url=subscription_url))
     return get_instruction_detail_keyboard(buttons)
 
 
@@ -477,8 +476,26 @@ async def instruction_platform(callback: CallbackQuery):
         await callback.answer()
         return
     subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
+    subscription_deeplink = _build_subscription_deeplink(subscription_url)
+    routing_name = glv.config.get('CLIENT_ROUTING_DEFAULT_NAME') or "Routing"
+    routing_deeplink = _build_routing_deeplink()
+    text = _(
+        "{base_text}\n\n"
+        "Ссылка подписки:\n"
+        "<code>{subscription_url}</code>\n\n"
+        "Deep-link для добавления подписки:\n"
+        "<code>{subscription_deeplink}</code>\n\n"
+        "Routing ({routing_name}):\n"
+        "<code>{routing_deeplink}</code>"
+    ).format(
+        base_text=data.get("text"),
+        subscription_url=subscription_url,
+        subscription_deeplink=subscription_deeplink,
+        routing_name=routing_name,
+        routing_deeplink=routing_deeplink,
+    )
     keyboard = _instruction_keyboard(data.get("download_url"), subscription_url)
-    await _send_instructions(callback, data.get("text"), keyboard)
+    await _send_instructions(callback, text, keyboard)
 
 
 @router.callback_query(F.data == "faq:about")
