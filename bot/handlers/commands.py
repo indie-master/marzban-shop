@@ -27,20 +27,25 @@ async def start(message: Message):
             days=glv.config.get('TEST_PERIOD_DAYS', 0)
         )
 
-    text = _(
-        "Welcome to Swiftless Service!\n\n"
-        "This bot helps you connect to secure and fast internet.\n\n"
-        "{trial_line}"
-        "Our principles:\n"
-        "— Safe\n"
-        "— Unlimited\n"
-        "— Fast\n\n"
-        "Available locations:\n"
-        "- Germany\n"
-        "- Slovakia\n"
-        "- Sweden\n\n"
-        "We also have YouTube without ads."
-    ).format(trial_line=trial_line)
+    start_override = glv.config.get('START_TEXT')
+    if start_override:
+        text = start_override.format(
+            service_name=glv.config.get('SERVICE_NAME') or glv.config.get('SHOP_NAME') or "VPN Service",
+            trial_line=trial_line,
+        )
+    else:
+        text = _(
+            "Добро пожаловать в {service_name}!\n\n"
+            "Этот бот помогает подключиться к безопасному и быстрому интернету.\n\n"
+            "{trial_line}"
+            "Наши принципы:\n"
+            "— Безопасно\n"
+            "— Безлимитно\n"
+            "— Быстро"
+        ).format(
+            service_name=glv.config.get('SERVICE_NAME') or glv.config.get('SHOP_NAME') or "VPN Service",
+            trial_line=trial_line,
+        )
     await message.answer(text, reply_markup=get_main_menu_keyboard(had_test_subscription))
 
 def register_commands(dp: Dispatcher):

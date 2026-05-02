@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 from aiogram import Router, F, Dispatcher
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, LabeledPrice, Message, InlineKeyboardButton
+from aiogram.types import CallbackQuery, LabeledPrice, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.i18n import gettext as _
 
 import logging
@@ -19,6 +20,7 @@ from keyboards import (
     get_main_menu_keyboard,
     get_instructions_menu_keyboard,
     get_instruction_detail_keyboard,
+    get_faq_keyboard,
 )
 
 from db.methods import (
@@ -28,7 +30,7 @@ from db.methods import (
     update_manual_payment,
     had_test_sub,
 )
-from utils import goods, yookassa, cryptomus, get_i18n_string
+from utils import goods, yookassa, cryptomus, get_i18n_string, marzban_api
 from utils.payments import process_successful_payment, format_expire
 import glv
 
@@ -408,93 +410,126 @@ async def _send_instructions(callback: CallbackQuery, text: str, keyboard=None):
     await callback.answer()
 
 
+def _build_instruction_platform_data() -> dict[str, dict]:
+    client_name = glv.config.get('CLIENT_NAME') or "HAPP"
+    return {
+        "apple": {
+            "title": _("iOS / macOS"),
+            "download_url": glv.config.get('CLIENT_IOS_URL'),
+            "text": _("Настройка {client} на iOS / macOS:\n1. Установите приложение.\n2. Нажмите «Добавить подписку».\n3. Подтвердите импорт и включите VPN.").format(client=client_name),
+        },
+        "android": {
+            "title": _("Android"),
+            "download_url": glv.config.get('CLIENT_ANDROID_URL') or glv.config.get('CLIENT_ANDROID_ALT_URL'),
+            "text": _("Настройка {client} на Android:\n1. Установите приложение.\n2. Нажмите «Добавить подписку».\n3. Подтвердите импорт и включите VPN.").format(client=client_name),
+        },
+        "windows": {
+            "title": _("Windows"),
+            "download_url": glv.config.get('CLIENT_WINDOWS_URL'),
+            "text": _("Настройка {client} на Windows:\n1. Установите приложение.\n2. Импортируйте подписку через кнопку ниже.\n3. Выберите сервер и подключитесь.").format(client=client_name),
+        },
+        "linux": {
+            "title": _("Linux"),
+            "download_url": glv.config.get('CLIENT_LINUX_URL'),
+            "text": _("Настройка {client} на Linux:\n1. Установите приложение.\n2. Импортируйте подписку через кнопку ниже.\n3. Выберите сервер и подключитесь.").format(client=client_name),
+        },
+    }
+
+
+def _build_subscription_deeplink(subscription_url: str) -> str:
+    scheme = glv.config.get('CLIENT_SUBSCRIPTION_URL_SCHEME') or "happ://add{url}"
+    encoded_url = quote(subscription_url, safe="")
+    return scheme.replace("{url}", encoded_url)
+
+
+def _build_routing_deeplink() -> str:
+    scheme = glv.config.get('CLIENT_ROUTING_URL_SCHEME') or "happ://routing/add{base64}"
+    base64_value = glv.config.get('CLIENT_ROUTING_DEFAULT_BASE64') or ""
+    return scheme.replace("{base64}", base64_value)
+
+
+def _instruction_keyboard(platform_key: str, download_url: str | None, has_subscription: bool) -> InlineKeyboardMarkup:
+    buttons = []
+    if download_url:
+        buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать приложение"), url=download_url))
+    if has_subscription:
+        buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), callback_data=f"instr_sub_{platform_key}"))
+        buttons.append(InlineKeyboardButton(text=_("🧭 Добавить routing"), callback_data=f"instr_route_{platform_key}"))
+    return get_instruction_detail_keyboard(buttons)
+
+
 @router.callback_query(F.data == "back:instructions")
 async def instructions_back(callback: CallbackQuery):
     await _send_instructions(callback, _("Choose your platform ⬇️"))
 
 
-@router.callback_query(F.data == "instr_apple")
-async def instructions_ios(callback: CallbackQuery):
-    text = _(
-        "iOS / macOS setup:\n"
-        "1. Install the Happ app from App Store.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Tap \"Add server\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top."
-    )
-    buttons = []
-    apple_url = glv.config.get('HAPP_IOS_URL')
-    if apple_url:
-        buttons.append(
-            InlineKeyboardButton(
-                text=_("Happ (iOS/MacOS)"),
-                url=apple_url,
-            )
+@router.callback_query(F.data.in_(["instr_apple", "instr_android", "instr_windows", "instr_linux"]))
+async def instruction_platform(callback: CallbackQuery):
+    platform_key = callback.data.replace("instr_", "")
+    platforms = _build_instruction_platform_data()
+    data = platforms.get(platform_key)
+    if not data:
+        await callback.answer()
+        return
+    user = await marzban_api.get_marzban_profile(callback.from_user.id)
+    has_subscription = bool(user)
+    text = data.get("text")
+    if not has_subscription:
+        text += _("\n\nПодписка пока не активна. Оформите подписку в разделе «Join 🏄🏻‍♂️», затем вернитесь сюда.")
+    keyboard = _instruction_keyboard(platform_key, data.get("download_url"), has_subscription)
+    await _send_instructions(callback, text, keyboard)
+
+
+@router.callback_query(F.data.startswith("instr_sub_"))
+async def instruction_send_subscription_link(callback: CallbackQuery):
+    user = await marzban_api.get_marzban_profile(callback.from_user.id)
+    if not user:
+        await callback.answer(_("Подписка не активна."), show_alert=True)
+        return
+    subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
+    subscription_deeplink = _build_subscription_deeplink(subscription_url)
+    await callback.message.answer(
+        _("Нажмите и скопируйте ссылку для импорта в {client}:\n<code>{link}</code>").format(
+            client=glv.config.get('CLIENT_NAME') or "HAPP",
+            link=subscription_deeplink,
         )
-    keyboard = get_instruction_detail_keyboard(buttons)
-    await _send_instructions(callback, text, keyboard)
-
-
-@router.callback_query(F.data == "instr_android")
-async def instructions_android(callback: CallbackQuery):
-    text = _(
-        "Android setup:\n"
-        "1. Install the Happ app from Google Play or APK.\n"
-        "2. Open the app and go to settings.\n"
-        "3. Tap \"Add server\" or the \"+\" icon.\n"
-        "4. Copy the key from the Telegram bot.\n"
-        "5. Paste the key into the app and tap \"Add\".\n"
-        "6. Enable VPN using the switch at the top."
     )
-    buttons = []
-    android_play = glv.config.get('HAPP_ANDROID_PLAY_URL')
-    android_apk = glv.config.get('HAPP_ANDROID_APK_URL')
-    if android_play:
-        buttons.append(InlineKeyboardButton(text=_("Happ (Google Play)"), url=android_play))
-    if android_apk:
-        buttons.append(InlineKeyboardButton(text=_("Happ (APK)"), url=android_apk))
-    keyboard = get_instruction_detail_keyboard(buttons)
-    await _send_instructions(callback, text, keyboard)
+    await callback.answer()
 
 
-@router.callback_query(F.data == "instr_windows")
-async def instructions_windows(callback: CallbackQuery):
-    text = _(
-        "Windows setup:\n"
-        "1. Download and install the app for Windows.\n"
-        "2. Launch Happ and wait for the interface to load.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Paste the key from the Telegram bot into the configuration field.\n"
-        "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site."
+@router.callback_query(F.data.startswith("instr_route_"))
+async def instruction_send_routing_link(callback: CallbackQuery):
+    user = await marzban_api.get_marzban_profile(callback.from_user.id)
+    if not user:
+        await callback.answer(_("Подписка не активна."), show_alert=True)
+        return
+    routing_name = glv.config.get('CLIENT_ROUTING_DEFAULT_NAME') or "Routing"
+    routing_deeplink = _build_routing_deeplink()
+    await callback.message.answer(
+        _("Нажмите и скопируйте ссылку routing «{name}»:\n<code>{link}</code>").format(
+            name=routing_name,
+            link=routing_deeplink,
+        )
     )
-    buttons = []
-    win_url = glv.config.get('HAPP_WINDOWS_URL')
-    if win_url:
-        buttons.append(InlineKeyboardButton(text=_("Happ (Windows)"), url=win_url))
-    keyboard = get_instruction_detail_keyboard(buttons)
-    await _send_instructions(callback, text, keyboard)
+    await callback.answer()
 
 
-@router.callback_query(F.data == "instr_linux")
-async def instructions_linux(callback: CallbackQuery):
-    text = _(
-        "Linux setup:\n"
-        "1. Download and install the app for your OS.\n"
-        "2. Launch Happ and wait for the interface to load.\n"
-        "3. Click \"Add configuration\" or the \"+\" icon.\n"
-        "4. Paste the key from the Telegram bot into the configuration field.\n"
-        "5. Click \"Save\" and then \"Connect\".\n"
-        "6. Done! Check the connection by opening any site."
+@router.callback_query(F.data == "faq:about")
+async def faq_about(callback: CallbackQuery):
+    default_text = _(
+        "Сервис предоставляет безопасное и анонимное подключение к интернету.\n"
+        "Он защищает ваши данные и обеспечивает конфиденциальность ваших онлайн-активностей.\n\n"
+        "Условия использования:\n"
+        "1. Не использовать для незаконных целей.\n"
+        "2. Не нарушать правила обслуживания провайдера.\n"
+        "3. Соблюдать законы вашей страны при использовании сервиса.\n"
+        "4. Безопасно хранить и не передавать учетные данные для доступа к сервису.\n\n"
+        "❗️Важная информация❗️\n\n"
+        "5. Использование торрентов: Подписка будет заблокирована в случае использования сервиса для скачивания или раздачи файлов через P2P сети и торренты.\n"
+        "6. Ограничение по устройствам: Подписка допускает подключение максимум 3 устройства."
     )
-    buttons = []
-    linux_url = glv.config.get('HAPP_LINUX_URL')
-    if linux_url:
-        buttons.append(InlineKeyboardButton(text=_("Happ (Linux)"), url=linux_url))
-    keyboard = get_instruction_detail_keyboard(buttons)
-    await _send_instructions(callback, text, keyboard)
+    text = glv.config.get('FAQ_ABOUT_TEXT') or default_text
+    await _send_instructions(callback, text, get_faq_keyboard())
 
 
 @router.callback_query(lambda c: c.data in goods.get_callbacks())
