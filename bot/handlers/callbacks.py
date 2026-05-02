@@ -448,12 +448,13 @@ def _build_routing_deeplink() -> str:
     return scheme.replace("{base64}", base64_value)
 
 
-def _instruction_keyboard(download_url: str | None, subscription_url: str | None) -> InlineKeyboardMarkup:
+def _instruction_keyboard(platform_key: str, download_url: str | None, has_subscription: bool) -> InlineKeyboardMarkup:
     buttons = []
     if download_url:
         buttons.append(InlineKeyboardButton(text=_("⬇️ Скачать приложение"), url=download_url))
-    if subscription_url:
-        buttons.append(InlineKeyboardButton(text=_("🌐 Открыть страницу подписки"), url=subscription_url))
+    if has_subscription:
+        buttons.append(InlineKeyboardButton(text=_("➕ Добавить подписку"), callback_data=f"instr_sub_{platform_key}"))
+        buttons.append(InlineKeyboardButton(text=_("🧭 Добавить routing"), callback_data=f"instr_route_{platform_key}"))
     return get_instruction_detail_keyboard(buttons)
 
 
@@ -462,7 +463,7 @@ async def instructions_back(callback: CallbackQuery):
     await _send_instructions(callback, _("Choose your platform ⬇️"))
 
 
-@router.callback_query(F.data.startswith("instr_"))
+@router.callback_query(F.data.in_(["instr_apple", "instr_android", "instr_windows", "instr_linux"]))
 async def instruction_platform(callback: CallbackQuery):
     platform_key = callback.data.replace("instr_", "")
     platforms = _build_instruction_platform_data()
@@ -471,31 +472,46 @@ async def instruction_platform(callback: CallbackQuery):
         await callback.answer()
         return
     user = await marzban_api.get_marzban_profile(callback.from_user.id)
+    has_subscription = bool(user)
+    text = data.get("text")
+    if not has_subscription:
+        text += _("\n\nПодписка пока не активна. Оформите подписку в разделе «Join 🏄🏻‍♂️», затем вернитесь сюда.")
+    keyboard = _instruction_keyboard(platform_key, data.get("download_url"), has_subscription)
+    await _send_instructions(callback, text, keyboard)
+
+
+@router.callback_query(F.data.startswith("instr_sub_"))
+async def instruction_send_subscription_link(callback: CallbackQuery):
+    user = await marzban_api.get_marzban_profile(callback.from_user.id)
     if not user:
-        await callback.message.answer(_("Подписка пока не активна. Сначала оформите подписку в разделе «Join 🏄🏻‍♂️»."))
-        await callback.answer()
+        await callback.answer(_("Подписка не активна."), show_alert=True)
         return
     subscription_url = glv.config['PANEL_GLOBAL'] + user['subscription_url']
     subscription_deeplink = _build_subscription_deeplink(subscription_url)
+    await callback.message.answer(
+        _("Нажмите и скопируйте ссылку для импорта в {client}:\n<code>{link}</code>").format(
+            client=glv.config.get('CLIENT_NAME') or "HAPP",
+            link=subscription_deeplink,
+        )
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("instr_route_"))
+async def instruction_send_routing_link(callback: CallbackQuery):
+    user = await marzban_api.get_marzban_profile(callback.from_user.id)
+    if not user:
+        await callback.answer(_("Подписка не активна."), show_alert=True)
+        return
     routing_name = glv.config.get('CLIENT_ROUTING_DEFAULT_NAME') or "Routing"
     routing_deeplink = _build_routing_deeplink()
-    text = _(
-        "{base_text}\n\n"
-        "Ссылка подписки:\n"
-        "<code>{subscription_url}</code>\n\n"
-        "Deep-link для добавления подписки:\n"
-        "<code>{subscription_deeplink}</code>\n\n"
-        "Routing ({routing_name}):\n"
-        "<code>{routing_deeplink}</code>"
-    ).format(
-        base_text=data.get("text"),
-        subscription_url=subscription_url,
-        subscription_deeplink=subscription_deeplink,
-        routing_name=routing_name,
-        routing_deeplink=routing_deeplink,
+    await callback.message.answer(
+        _("Нажмите и скопируйте ссылку routing «{name}»:\n<code>{link}</code>").format(
+            name=routing_name,
+            link=routing_deeplink,
+        )
     )
-    keyboard = _instruction_keyboard(data.get("download_url"), subscription_url)
-    await _send_instructions(callback, text, keyboard)
+    await callback.answer()
 
 
 @router.callback_query(F.data == "faq:about")
